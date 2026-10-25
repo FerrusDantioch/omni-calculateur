@@ -347,8 +347,8 @@
       return;
     }
 
-    // Permet de remplacer l'opérateur avant de saisir
-    // le deuxième nombre.
+    // Remplace l'opérateur si le deuxième nombre
+    // n'a pas encore été saisi.
     if (pendingOperator && waitingForOperand) {
       pendingOperator = nextOperator;
       updateDisplay();
@@ -702,9 +702,13 @@
   const CURRENCY_CODES = Object.keys(CURRENCIES);
   const RATES_KEY = "omni-rates-v1";
 
+  /*
+   * Correction de l'ancienne adresse api.frankfurter.app,
+   * qui provoquait l'erreur 301.
+   */
   const RATES_URL =
-    "https://api.frankfurter.app/latest" +
-    "?from=EUR&to=USD,GBP,JPY,CHF,CAD";
+    "https://api.frankfurter.dev/v1/latest" +
+    "?base=EUR&symbols=USD,GBP,JPY,CHF,CAD";
 
   // Valeurs de dernier recours, et non cours de marché actuels.
   const EMBEDDED_RATES = {
@@ -809,6 +813,18 @@
     const fromRate = Number(rateState.rates[from]);
     const toRate = Number(rateState.rates[to]);
 
+    if (
+      !Number.isFinite(fromRate) ||
+      !Number.isFinite(toRate) ||
+      fromRate <= 0 ||
+      toRate <= 0
+    ) {
+      conversionResult.textContent = "—";
+      unitRate.textContent =
+        "Les taux nécessaires à cette conversion sont indisponibles.";
+      return;
+    }
+
     const converted =
       amount * (toRate / fromRate);
 
@@ -872,14 +888,6 @@
       "La dernière version connue est conservée sur cet appareil.";
   }
 
-  /*
-   * Correction de l'actualisation :
-   * - journalisation des erreurs ;
-   * - validation de la réponse ;
-   * - application des données à rateState ;
-   * - recalcul immédiat de la conversion ;
-   * - distinction entre nouveaux taux et taux inchangés.
-   */
   async function refreshRates() {
     if (isFetchingRates) {
       return;
@@ -899,12 +907,16 @@
 
     const timeout = setTimeout(() => {
       controller.abort();
-    }, 8000);
+    }, 10000);
 
     try {
       const response = await fetch(RATES_URL, {
+        method: "GET",
         signal: controller.signal,
-        cache: "no-store"
+        cache: "no-store",
+        headers: {
+          Accept: "application/json"
+        }
       });
 
       if (!response.ok) {
@@ -942,10 +954,6 @@
         );
       }
 
-      /*
-       * fetchedAt n'est pas comparé, car il change nécessairement
-       * à chaque téléchargement.
-       */
       const ratesUnchanged =
         rateKind !== "embedded" &&
         candidate.date === rateState.date &&
@@ -954,7 +962,7 @@
           Number(rateState.rates[code])
         );
 
-      // Application effective des nouvelles données.
+      // Application des données reçues à l'état du convertisseur.
       rateState = candidate;
       rateKind = "live";
 
@@ -970,7 +978,7 @@
         );
       }
 
-      // Recalcule immédiatement le résultat et le taux unitaire.
+      // Mise à jour immédiate du résultat et du taux unitaire.
       updateConversion();
 
       const time = new Intl.DateTimeFormat("fr-FR", {
@@ -989,6 +997,11 @@
           `Nouveaux taux appliqués à ${time}. `
         );
       }
+
+      console.info(
+        "Taux de change correctement récupérés :",
+        candidate
+      );
     } catch (error) {
       console.error(
         "Échec de l’actualisation des taux :",
@@ -1032,7 +1045,6 @@
     updateConversion();
   });
 
-  // Branchement du bouton d'actualisation.
   refreshRatesButton.addEventListener(
     "click",
     refreshRates
