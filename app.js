@@ -27,7 +27,9 @@
   const THEME_KEY = "omni-theme";
   const themeSelect = $("#theme-select");
   const themeMeta = $("#theme-color-meta");
+
   const validThemes = ["clair", "sombre", "nuit"];
+
   const themeColors = {
     clair: "#f4f6fb",
     sombre: "#0f141b",
@@ -56,12 +58,16 @@
      Navigation par onglets
   ------------------------------------------------------------------ */
 
-  const tabs = Array.from(document.querySelectorAll("[role='tab']"));
+  const tabs = Array.from(
+    document.querySelectorAll("[role='tab']")
+  );
 
   function activateTab(name) {
     tabs.forEach((tab) => {
       const active = tab.dataset.tab === name;
-      const panel = document.getElementById(tab.getAttribute("aria-controls"));
+      const panel = document.getElementById(
+        tab.getAttribute("aria-controls")
+      );
 
       tab.setAttribute("aria-selected", String(active));
       tab.tabIndex = active ? 0 : -1;
@@ -70,7 +76,9 @@
   }
 
   tabs.forEach((tab, index) => {
-    tab.addEventListener("click", () => activateTab(tab.dataset.tab));
+    tab.addEventListener("click", () => {
+      activateTab(tab.dataset.tab);
+    });
 
     tab.addEventListener("keydown", (event) => {
       let nextIndex = null;
@@ -93,7 +101,9 @@
     });
   });
 
-  if (new URLSearchParams(location.search).get("vue") === "devises") {
+  if (
+    new URLSearchParams(location.search).get("vue") === "devises"
+  ) {
     activateTab("devises");
   }
 
@@ -131,12 +141,19 @@
     }
 
     // Limite les artefacts comme 0.1 + 0.2 = 0.30000000000000004.
-    return String(Number.parseFloat(value.toPrecision(12)));
+    return String(
+      Number.parseFloat(value.toPrecision(12))
+    );
   }
 
   function formatDisplay(value) {
-    const text = typeof value === "number" ? numberToString(value) : String(value);
-    return text === "Erreur" ? text : text.replace(".", ",");
+    const text = typeof value === "number"
+      ? numberToString(value)
+      : String(value);
+
+    return text === "Erreur"
+      ? text
+      : text.replace(".", ",");
   }
 
   function updateDisplay() {
@@ -157,6 +174,7 @@
     waitingForOperand = false;
     overwriteCurrent = false;
     lastExpression = "";
+
     updateDisplay();
   }
 
@@ -167,6 +185,7 @@
     waitingForOperand = false;
     overwriteCurrent = false;
     lastExpression = error.message || "Calcul impossible";
+
     updateDisplay();
   }
 
@@ -177,27 +196,35 @@
       case "+":
         result = left + right;
         break;
+
       case "-":
         result = left - right;
         break;
+
       case "*":
         result = left * right;
         break;
+
       case "/":
         if (right === 0) {
           throw new Error("Division par zéro impossible");
         }
+
         result = left / right;
         break;
+
       case "^":
         result = Math.pow(left, right);
         break;
+
       default:
         throw new Error("Opération inconnue");
     }
 
     if (!Number.isFinite(result)) {
-      throw new Error("Le résultat n’est pas un nombre fini");
+      throw new Error(
+        "Le résultat n’est pas un nombre fini"
+      );
     }
 
     return result;
@@ -218,9 +245,11 @@
       current = `-${digit}`;
     } else {
       const digitCount = current.replace(/\D/g, "").length;
+
       if (digitCount >= 16) {
         return;
       }
+
       current += digit;
     }
 
@@ -318,6 +347,8 @@
       return;
     }
 
+    // Permet de remplacer l'opérateur avant de saisir
+    // le deuxième nombre.
     if (pendingOperator && waitingForOperand) {
       pendingOperator = nextOperator;
       updateDisplay();
@@ -334,7 +365,12 @@
       if (previous === null) {
         previous = inputValue;
       } else if (pendingOperator) {
-        const result = calculate(previous, inputValue, pendingOperator);
+        const result = calculate(
+          previous,
+          inputValue,
+          pendingOperator
+        );
+
         previous = result;
         current = numberToString(result);
       } else {
@@ -349,13 +385,14 @@
     waitingForOperand = true;
     overwriteCurrent = false;
     lastExpression = "";
+
     updateDisplay();
   }
 
   function equals() {
     if (
       current === "Erreur" ||
-    !pendingOperator ||
+      !pendingOperator ||
       previous === null ||
       waitingForOperand
     ) {
@@ -369,8 +406,11 @@
     try {
       const result = calculate(left, right, operator);
       const resultText = numberToString(result);
+
       const expression =
-        `${formatDisplay(left)} ${operatorSymbols[operator]} ${formatDisplay(right)}`;
+        `${formatDisplay(left)} ` +
+        `${operatorSymbols[operator]} ` +
+        `${formatDisplay(right)}`;
 
       current = resultText;
       previous = null;
@@ -406,7 +446,8 @@
     try {
       switch (operation) {
         case "percent":
-          // 200 + 10 % donne 220 ; 200 × 10 % donne 20.
+          // 200 + 10 % donne 220.
+          // 200 × 10 % donne 20.
           if (
             previous !== null &&
             pendingOperator &&
@@ -416,13 +457,17 @@
           } else {
             result = value / 100;
           }
+
           label = `${formatDisplay(value)} %`;
           break;
 
         case "sqrt":
           if (value < 0) {
-            throw new Error("Racine carrée d’un nombre négatif impossible");
+            throw new Error(
+              "Racine carrée d’un nombre négatif impossible"
+            );
           }
+
           result = Math.sqrt(value);
           label = `√(${formatDisplay(value)})`;
           break;
@@ -436,6 +481,7 @@
           if (value === 0) {
             throw new Error("Inverse de zéro impossible");
           }
+
           result = 1 / value;
           label = `1 ÷ (${formatDisplay(value)})`;
           break;
@@ -445,7 +491,9 @@
       }
 
       if (!Number.isFinite(result)) {
-        throw new Error("Le résultat n’est pas un nombre fini");
+        throw new Error(
+          "Le résultat n’est pas un nombre fini"
+        );
       }
     } catch (error) {
       showError(error);
@@ -456,7 +504,7 @@
     current = resultText;
 
     if (pendingOperator && previous !== null) {
-      // Le résultat unaire devient l’opérande de droite.
+      // Le résultat devient l'opérande de droite.
       waitingForOperand = false;
       overwriteCurrent = true;
     } else {
@@ -465,6 +513,7 @@
       waitingForOperand = true;
       overwriteCurrent = false;
       lastExpression = `${label} =`;
+
       addHistory(label, resultText);
     }
 
@@ -473,6 +522,7 @@
 
   calculator.addEventListener("click", (event) => {
     const button = event.target.closest("button");
+
     if (!button) {
       return;
     }
@@ -502,16 +552,21 @@
     };
 
     const action = actions[button.dataset.action];
+
     if (action) {
       action();
     }
   });
 
-  /* ------------------------- Historique --------------------------- */
+  /* ------------------------------------------------------------------
+     Historique des calculs
+  ------------------------------------------------------------------ */
 
   function loadHistory() {
     try {
-      const parsed = JSON.parse(storageGet(HISTORY_KEY) || "[]");
+      const parsed = JSON.parse(
+        storageGet(HISTORY_KEY) || "[]"
+      );
 
       if (!Array.isArray(parsed)) {
         return [];
@@ -533,17 +588,24 @@
   let calculationHistory = loadHistory();
 
   function saveHistory() {
-    storageSet(HISTORY_KEY, JSON.stringify(calculationHistory));
+    storageSet(
+      HISTORY_KEY,
+      JSON.stringify(calculationHistory)
+    );
   }
 
   function renderHistory() {
     historyList.replaceChildren();
-    clearHistoryButton.disabled = calculationHistory.length === 0;
+
+    clearHistoryButton.disabled =
+      calculationHistory.length === 0;
 
     if (calculationHistory.length === 0) {
       const emptyItem = document.createElement("li");
+
       emptyItem.className = "history-empty";
       emptyItem.textContent = "Aucun calcul enregistré.";
+
       historyList.append(emptyItem);
       return;
     }
@@ -557,6 +619,7 @@
       button.type = "button";
       button.className = "history-entry";
       button.dataset.historyIndex = String(index);
+
       button.setAttribute(
         "aria-label",
         `Reprendre le résultat ${formatDisplay(item.result)}`
@@ -572,19 +635,33 @@
   }
 
   function addHistory(expression, result) {
-    calculationHistory.unshift({ expression, result });
-    calculationHistory = calculationHistory.slice(0, MAX_HISTORY);
+    calculationHistory.unshift({
+      expression,
+      result
+    });
+
+    calculationHistory = calculationHistory.slice(
+      0,
+      MAX_HISTORY
+    );
+
     saveHistory();
     renderHistory();
   }
 
   historyList.addEventListener("click", (event) => {
-    const button = event.target.closest("button[data-history-index]");
+    const button = event.target.closest(
+      "button[data-history-index]"
+    );
+
     if (!button) {
       return;
     }
 
-    const item = calculationHistory[Number(button.dataset.historyIndex)];
+    const item = calculationHistory[
+      Number(button.dataset.historyIndex)
+    ];
+
     if (!item) {
       return;
     }
@@ -595,11 +672,13 @@
     waitingForOperand = true;
     overwriteCurrent = false;
     lastExpression = "";
+
     updateDisplay();
   });
 
   clearHistoryButton.addEventListener("click", () => {
     calculationHistory = [];
+
     saveHistory();
     renderHistory();
   });
@@ -622,10 +701,12 @@
 
   const CURRENCY_CODES = Object.keys(CURRENCIES);
   const RATES_KEY = "omni-rates-v1";
-  const RATES_URL =
-    "https://api.frankfurter.app/latest?from=EUR&to=USD,GBP,JPY,CHF,CAD";
 
-  // Dernier recours uniquement : ce ne sont pas des cours de marché actuels.
+  const RATES_URL =
+    "https://api.frankfurter.app/latest" +
+    "?from=EUR&to=USD,GBP,JPY,CHF,CAD";
+
+  // Valeurs de dernier recours, et non cours de marché actuels.
   const EMBEDDED_RATES = {
     base: "EUR",
     date: null,
@@ -659,6 +740,7 @@
       data.rates &&
       CURRENCY_CODES.every((code) => {
         const rate = Number(data.rates[code]);
+
         return Number.isFinite(rate) && rate > 0;
       })
     );
@@ -666,7 +748,10 @@
 
   function loadStoredRates() {
     try {
-      const data = JSON.parse(storageGet(RATES_KEY) || "null");
+      const data = JSON.parse(
+        storageGet(RATES_KEY) || "null"
+      );
+
       return validRateData(data) ? data : null;
     } catch (error) {
       return null;
@@ -679,10 +764,12 @@
       const toOption = document.createElement("option");
 
       fromOption.value = code;
-      fromOption.textContent = `${code} — ${CURRENCIES[code]}`;
+      fromOption.textContent =
+        `${code} — ${CURRENCIES[code]}`;
 
       toOption.value = code;
-      toOption.textContent = `${code} — ${CURRENCIES[code]}`;
+      toOption.textContent =
+        `${code} — ${CURRENCIES[code]}`;
 
       fromSelect.append(fromOption);
       toSelect.append(toOption);
@@ -700,31 +787,44 @@
 
   function updateConversion() {
     const rawAmount = amountInput.value.trim();
-    const amount = Number(rawAmount.replace(",", "."));
+
+    const amount = Number(
+      rawAmount.replace(",", ".")
+    );
+
     const from = fromSelect.value;
     const to = toSelect.value;
 
-    if (!rawAmount || !Number.isFinite(amount) || amount < 0) {
+    if (
+      !rawAmount ||
+      !Number.isFinite(amount) ||
+      amount < 0
+    ) {
       conversionResult.textContent = "—";
-      unitRate.textContent = "Saisissez un montant positif ou nul.";
+      unitRate.textContent =
+        "Saisissez un montant positif ou nul.";
       return;
     }
 
     const fromRate = Number(rateState.rates[from]);
     const toRate = Number(rateState.rates[to]);
-    const converted = amount * (toRate / fromRate);
+
+    const converted =
+      amount * (toRate / fromRate);
 
     if (!Number.isFinite(converted)) {
       conversionResult.textContent = "—";
-      unitRate.textContent = "Le montant est trop grand pour être converti.";
+      unitRate.textContent =
+        "Le montant est trop grand pour être converti.";
       return;
     }
 
-    conversionResult.textContent = new Intl.NumberFormat("fr-FR", {
-      style: "currency",
-      currency: to,
-      maximumFractionDigits: to === "JPY" ? 0 : 2
-    }).format(converted);
+    conversionResult.textContent =
+      new Intl.NumberFormat("fr-FR", {
+        style: "currency",
+        currency: to,
+        maximumFractionDigits: to === "JPY" ? 0 : 2
+      }).format(converted);
 
     const oneUnit = toRate / fromRate;
     const inverseUnit = fromRate / toRate;
@@ -751,11 +851,14 @@
   }
 
   function updateRateStatus(prefix = "") {
-    const offlineText = navigator.onLine ? "" : "Hors ligne. ";
+    const offlineText = navigator.onLine
+      ? ""
+      : "Hors ligne. ";
 
     if (rateKind === "embedded") {
       rateStatus.textContent =
-        `${offlineText}${prefix}Taux de secours intégrés, approximatifs et non actualisés. ` +
+        `${offlineText}${prefix}` +
+        "Taux de secours intégrés, approximatifs et non actualisés. " +
         "Connectez-vous pour télécharger des taux récents.";
       return;
     }
@@ -764,10 +867,19 @@
     const date = formatRateDate(rateState.date);
 
     rateStatus.textContent =
-      `${offlineText}${prefix}Taux ${source} du ${date}. ` +
+      `${offlineText}${prefix}` +
+      `Taux ${source} du ${date}. ` +
       "La dernière version connue est conservée sur cet appareil.";
   }
 
+  /*
+   * Correction de l'actualisation :
+   * - journalisation des erreurs ;
+   * - validation de la réponse ;
+   * - application des données à rateState ;
+   * - recalcul immédiat de la conversion ;
+   * - distinction entre nouveaux taux et taux inchangés.
+   */
   async function refreshRates() {
     if (isFetchingRates) {
       return;
@@ -780,10 +892,14 @@
 
     isFetchingRates = true;
     refreshRatesButton.disabled = true;
+    refreshRatesButton.setAttribute("aria-busy", "true");
     rateStatus.textContent = "Actualisation des taux…";
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
+
+    const timeout = setTimeout(() => {
+      controller.abort();
+    }, 8000);
 
     try {
       const response = await fetch(RATES_URL, {
@@ -792,10 +908,23 @@
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        throw new Error(
+          `Le serveur des taux a répondu HTTP ${response.status}`
+        );
       }
 
       const data = await response.json();
+
+      if (
+        !data ||
+        !data.rates ||
+        typeof data.rates !== "object"
+      ) {
+        throw new Error(
+          "La réponse de l’API ne contient pas de taux exploitables"
+        );
+      }
+
       const candidate = {
         base: "EUR",
         date: data.date || null,
@@ -808,43 +937,117 @@
       };
 
       if (!validRateData(candidate)) {
-        throw new Error("Réponse de taux incomplète");
+        throw new Error(
+          "Certaines devises nécessaires sont absentes ou invalides"
+        );
       }
 
+      /*
+       * fetchedAt n'est pas comparé, car il change nécessairement
+       * à chaque téléchargement.
+       */
+      const ratesUnchanged =
+        rateKind !== "embedded" &&
+        candidate.date === rateState.date &&
+        CURRENCY_CODES.every((code) =>
+          Number(candidate.rates[code]) ===
+          Number(rateState.rates[code])
+        );
+
+      // Application effective des nouvelles données.
       rateState = candidate;
       rateKind = "live";
-      storageSet(RATES_KEY, JSON.stringify(candidate));
 
+      const saved = storageSet(
+        RATES_KEY,
+        JSON.stringify(candidate)
+      );
+
+      if (!saved) {
+        console.warn(
+          "Les taux ont été appliqués, mais n’ont pas pu " +
+          "être enregistrés localement."
+        );
+      }
+
+      // Recalcule immédiatement le résultat et le taux unitaire.
       updateConversion();
-      updateRateStatus("Actualisation réussie. ");
+
+      const time = new Intl.DateTimeFormat("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+      }).format(new Date());
+
+      if (ratesUnchanged) {
+        updateRateStatus(
+          `Vérification effectuée à ${time} : ` +
+          "le fournisseur n’a publié aucun nouveau taux. "
+        );
+      } else {
+        updateRateStatus(
+          `Nouveaux taux appliqués à ${time}. `
+        );
+      }
     } catch (error) {
-      updateRateStatus("Actualisation impossible. ");
+      console.error(
+        "Échec de l’actualisation des taux :",
+        error
+      );
+
+      updateRateStatus(
+        "Actualisation impossible ; " +
+        "les derniers taux connus sont conservés. "
+      );
     } finally {
       clearTimeout(timeout);
+
       isFetchingRates = false;
       refreshRatesButton.disabled = false;
+      refreshRatesButton.removeAttribute("aria-busy");
     }
   }
 
-  amountInput.addEventListener("input", updateConversion);
-  fromSelect.addEventListener("change", updateConversion);
-  toSelect.addEventListener("change", updateConversion);
+  amountInput.addEventListener(
+    "input",
+    updateConversion
+  );
+
+  fromSelect.addEventListener(
+    "change",
+    updateConversion
+  );
+
+  toSelect.addEventListener(
+    "change",
+    updateConversion
+  );
 
   swapButton.addEventListener("click", () => {
     const previousFrom = fromSelect.value;
+
     fromSelect.value = toSelect.value;
     toSelect.value = previousFrom;
+
     updateConversion();
   });
 
-  refreshRatesButton.addEventListener("click", refreshRates);
+  // Branchement du bouton d'actualisation.
+  refreshRatesButton.addEventListener(
+    "click",
+    refreshRates
+  );
 
-  window.addEventListener("offline", () => updateRateStatus());
+  window.addEventListener("offline", () => {
+    updateRateStatus();
+  });
+
   window.addEventListener("online", refreshRates);
 
   populateCurrencySelects();
 
   const storedRates = loadStoredRates();
+
   if (storedRates) {
     rateState = storedRates;
     rateKind = "stored";
@@ -864,11 +1067,15 @@
   const installButton = $("#install-button");
   let deferredInstallPrompt = null;
 
-  window.addEventListener("beforeinstallprompt", (event) => {
-    event.preventDefault();
-    deferredInstallPrompt = event;
-    installButton.hidden = false;
-  });
+  window.addEventListener(
+    "beforeinstallprompt",
+    (event) => {
+      event.preventDefault();
+
+      deferredInstallPrompt = event;
+      installButton.hidden = false;
+    }
+  );
 
   installButton.addEventListener("click", async () => {
     if (!deferredInstallPrompt) {
@@ -894,7 +1101,9 @@
     "serviceWorker" in navigator &&
     (
       location.protocol === "https:" ||
-      ["localhost", "127.0.0.1", "[::1]"].includes(location.hostname)
+      ["localhost", "127.0.0.1", "[::1]"].includes(
+        location.hostname
+      )
     );
 
   if (canRegisterServiceWorker) {
@@ -902,7 +1111,10 @@
       navigator.serviceWorker
         .register("./service-worker.js")
         .catch((error) => {
-          console.warn("Service Worker non enregistré :", error);
+          console.warn(
+            "Service Worker non enregistré :",
+            error
+          );
         });
     });
   }
