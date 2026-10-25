@@ -1,7 +1,7 @@
 "use strict";
 
 // Incrémentez cette version lors d'une mise à jour importante de l'interface.
-const CACHE_NAME = "omni-shell-v1.0.0";
+const CACHE_NAME = "omni-shell-v1.0.1";
 const CACHE_PREFIX = "omni-shell-";
 
 const INDEX_URL = new URL("./index.html", self.registration.scope).href;
