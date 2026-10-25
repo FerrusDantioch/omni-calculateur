@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="fr" data-theme="clair">
+<head>
+  <meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+  <meta name="description"
+        content="Calculatrice scientifique et convertisseur de devises utilisables hors ligne.">
+  <meta name="theme-color" id="theme-color-meta" content="#f4f6fb">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="omni-calc">
+
+  <title>omni-calculateur</title>
+
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+
+  <!-- Restaure le thème avant l'affichage de la page pour éviter un flash. -->
+  <script>
+    (function () {
+      try {
+        var theme = localStorage.getItem("omni-theme");
+        if (["clair", "sombre", "nuit"].indexOf(theme) !== -1) {
+          document.documentElement.dataset.theme = theme;
+        }
+      } catch (error) {
+        // L'application reste utilisable si le stockage est indisponible.
+      }
+    }());
+  </script>
+
+  <link rel="stylesheet" href="./style.css">
+  <script src="./app.js" defer></script>
+</head>
+
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-logo" aria-hidden="true">Ω</span>
+        <div>
+          <h1>omni-calculateur</h1>
+          <p>Calculs et devises, même hors ligne</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <div class="theme-control">
+          <label for="theme-select">Thème</label>
+          <select id="theme-select">
+            <option value="clair">Clair</option>
+            <option value="sombre">Sombre</option>
+            <option value="nuit">Sombre « Violet Nuit »</option>
+          </select>
+        </div>
+
+        <button id="install-button" class="button-secondary" type="button" hidden>
+          Installer
+        </button>
+      </div>
+    </header>
+
+    <nav class="tabs" role="tablist" aria-label="Fonctions de l’application">
+      <button
+        id="tab-calculatrice"
+        class="tab"
+        type="button"
+        role="tab"
+        data-tab="calculatrice"
+        aria-selected="true"
+        aria-controls="panel-calculatrice"
+      >
+        Calculatrice
+      </button>
+
+      <button
+        id="tab-devises"
+        class="tab"
+        type="button"
+        role="tab"
+        data-tab="devises"
+        aria-selected="false"
+        aria-controls="panel-devises"
+        tabindex="-1"
+      >
+        Convertisseur
+      </button>
+    </nav>
+
+    <main>
+      <!-- Calculatrice -->
+      <section
+        id="panel-calculatrice"
+        class="panel"
+        role="tabpanel"
+        aria-labelledby="tab-calculatrice"
+      >
+        <div class="calculator-layout">
+          <div class="calculator" aria-label="Calculatrice universelle">
+            <div class="calculator-screen">
+              <div id="calc-expression" class="calc-expression"></div>
+              <output
+                id="calc-display"
+                class="calc-display"
+                aria-label="Résultat du calcul"
+                aria-live="polite"
+              >0</output>
+            </div>
+
+            <div class="scientific-keys" aria-label="Fonctions scientifiques">
+              <button class="key scientific" type="button"
+                      data-unary="sqrt" aria-label="Racine carrée">√</button>
+              <button class="key scientific" type="button"
+                      data-unary="square" aria-label="Mettre au carré">x²</button>
+              <button class="key scientific operator" type="button"
+                      data-operator="^" aria-label="Puissance x exposant y">xʸ</button>
+              <button class="key scientific" type="button"
+                      data-unary="inverse" aria-label="Inverse, un divisé par x">1/x</button>
+              <button class="key scientific" type="button"
+                      data-unary="percent" aria-label="Pourcentage">%</button>
+            </div>
+
+            <div class="keypad" aria-label="Clavier de la calculatrice">
+              <button class="key danger" type="button"
+                      data-action="clear-all" aria-label="Tout effacer">AC</button>
+              <button class="key utility" type="button"
+                      data-action="clear-entry" aria-label="Effacer la saisie">CE</button>
+              <button class="key utility" type="button"
+                      data-action="backspace"
+                      aria-label="Effacer le dernier chiffre">⌫</button>
+              <button class="key operator" type="button"
+                      data-operator="/" aria-label="Diviser">÷</button>
+
+              <button class="key" type="button" data-digit="7">7</button>
+              <button class="key" type="button" data-digit="8">8</button>
+              <button class="key" type="button" data-digit="9">9</button>
+              <button class="key operator" type="button"
+                      data-operator="*" aria-label="Multiplier">×</button>
+
+              <button class="key" type="button" data-digit="4">4</button>
+              <button class="key" type="button" data-digit="5">5</button>
+              <button class="key" type="button" data-digit="6">6</button>
+              <button class="key operator" type="button"
+                      data-operator="-" aria-label="Soustraire">−</button>
+
+              <button class="key" type="button" data-digit="1">1</button>
+              <button class="key" type="button" data-digit="2">2</button>
+              <button class="key" type="button" data-digit="3">3</button>
+              <button class="key operator" type="button"
+                      data-operator="+" aria-label="Additionner">+</button>
+
+              <button class="key" type="button"
+                      data-action="toggle-sign"
+                      aria-label="Changer le signe">±</button>
+              <button class="key" type="button" data-digit="0">0</button>
+              <button class="key" type="button"
+                      data-action="decimal"
+                      aria-label="Séparateur décimal">,</button>
+              <button class="key equal" type="button"
+                      data-action="equals" aria-label="Calculer le résultat">=</button>
+            </div>
+          </div>
+
+          <aside class="history" aria-labelledby="history-title">
+            <div class="history-header">
+              <h2 id="history-title">Historique</h2>
+              <button id="clear-history" class="text-button" type="button">
+                Effacer
+              </button>
+            </div>
+            <p class="history-help">Sélectionnez un résultat pour le réutiliser.</p>
+            <ul id="history-list" class="history-list"></ul>
+          </aside>
+        </div>
+      </section>
+
+      <!-- Convertisseur -->
+      <section
+        id="panel-devises"
+        class="panel"
+        role="tabpanel"
+        aria-labelledby="tab-devises"
+        hidden
+      >
+        <div class="converter">
+          <h2>Convertisseur de devises</h2>
+          <p class="section-intro">
+            La conversion reste disponible avec les derniers taux enregistrés.
+          </p>
+
+          <div class="field">
+            <label for="amount">Montant</label>
+            <input
+              id="amount"
+              type="number"
+              value="1"
+              min="0"
+              step="any"
+              inputmode="decimal"
+              autocomplete="off"
+            >
+          </div>
+
+          <div class="currency-selects">
+            <div class="field">
+              <label for="from-currency">De</label>
+              <select id="from-currency"></select>
+            </div>
+
+            <button
+              id="swap-currencies"
+              class="swap-button"
+              type="button"
+              aria-label="Inverser les devises"
+              title="Inverser les devises"
+            >⇄</button>
+
+            <div class="field">
+              <label for="to-currency">Vers</label>
+              <select id="to-currency"></select>
+            </div>
+          </div>
+
+          <div class="conversion-card">
+            <span class="conversion-label">Résultat</span>
+            <output
+              id="conversion-result"
+              for="amount from-currency to-currency"
+              aria-live="polite"
+            >—</output>
+            <p id="unit-rate" class="unit-rate"></p>
+          </div>
+
+          <div class="rate-actions">
+            <button id="refresh-rates" class="button-secondary" type="button">
+              Actualiser les taux
+            </button>
+          </div>
+
+          <p id="rate-status" class="rate-status" role="status" aria-live="polite"></p>
+
+          <p class="small-note">
+            Les conversions sont indicatives et ne constituent pas un cours
+            d’exécution bancaire. Sans taux préalablement téléchargé, des valeurs
+            de secours clairement signalées sont utilisées.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>Application locale, installable et utilisable sans connexion après sa mise en cache.</p>
+    </footer>
+  </div>
+
+  <noscript>
+    <p class="noscript-message">
+      JavaScript doit être activé pour utiliser la calculatrice et le convertisseur.
+    </p>
+  </noscript>
+</body>
+</html>
