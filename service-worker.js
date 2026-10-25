@@ -1,10 +1,12 @@
 "use strict";
 
-// Incrémentez cette version lors d'une mise à jour importante de l'interface.
-const CACHE_NAME = "omni-shell-v1.0.1";
+const CACHE_NAME = "omni-shell-v1.0.2";
 const CACHE_PREFIX = "omni-shell-";
 
-const INDEX_URL = new URL("./index.html", self.registration.scope).href;
+const INDEX_URL = new URL(
+  "./index.html",
+  self.registration.scope
+).href;
 
 const APP_SHELL = [
   "./",
@@ -16,6 +18,10 @@ const APP_SHELL = [
   "./icons/icon-512.png"
 ];
 
+/*
+ * Installation :
+ * mise en cache de tous les fichiers nécessaires à l'interface.
+ */
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -24,13 +30,18 @@ self.addEventListener("install", (event) => {
   );
 });
 
+/*
+ * Activation :
+ * suppression des anciennes versions du cache de l'application.
+ */
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys()
       .then((keys) => Promise.all(
         keys
           .filter((key) =>
-            key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME
+            key.startsWith(CACHE_PREFIX) &&
+            key !== CACHE_NAME
           )
           .map((key) => caches.delete(key))
       ))
@@ -48,14 +59,18 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
 
   /*
-   * Les appels à l'API de devises ne sont pas interceptés.
-   * app.js gère leur timeout, leur stockage local et leur repli hors ligne.
+   * Les requêtes vers l'API Frankfurter ne sont pas interceptées.
+   * Leur téléchargement, leur stockage et leur repli hors ligne
+   * sont gérés dans app.js.
    */
   if (url.origin !== self.location.origin) {
     return;
   }
 
-  // Navigation : interface cache-first, avec index.html comme repli.
+  /*
+   * Navigation :
+   * utilisation de l'interface en cache, avec un repli réseau.
+   */
   if (request.mode === "navigate") {
     event.respondWith((async () => {
       const cachedIndex = await caches.match(INDEX_URL);
@@ -89,7 +104,10 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Autres ressources locales : cache-first, puis réseau et cache dynamique.
+  /*
+   * Autres ressources locales :
+   * cache-first, puis réseau si la ressource n'est pas en cache.
+   */
   event.respondWith((async () => {
     const cachedResponse = await caches.match(request);
 
@@ -104,7 +122,11 @@ self.addEventListener("fetch", (event) => {
       networkResponse.type === "basic"
     ) {
       const cache = await caches.open(CACHE_NAME);
-      await cache.put(request, networkResponse.clone());
+
+      await cache.put(
+        request,
+        networkResponse.clone()
+      );
     }
 
     return networkResponse;
