@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "omni-shell-v1.1.0";
+const CACHE_NAME = "omni-shell-v1.2.0";
 const CACHE_PREFIX = "omni-shell-";
 
 // Polices Google du thème « Violet Nuit », gardées pour le hors ligne.

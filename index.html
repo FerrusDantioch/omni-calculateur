@@ -67,6 +67,15 @@
         <button id="install-button" class="button-secondary" type="button" hidden>
           Installer
         </button>
+
+        <button id="about-button" class="button-secondary about-button" type="button"
+                title="À propos" aria-label="À propos"
+                aria-haspopup="dialog" aria-controls="about-dialog">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+            <circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2"/>
+            <path d="M12 11v6M12 7.2v.1" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+          </svg>
+        </button>
       </div>
     </header>
 
@@ -503,6 +512,32 @@
       <p>Application locale, installable et utilisable sans connexion après sa mise en cache.</p>
     </footer>
   </div>
+
+  <!-- Fenêtre « À propos » : auteur, licence et lien vers le portfolio. -->
+  <dialog id="about-dialog" class="about-dialog" aria-labelledby="about-title">
+    <form method="dialog">
+      <span class="brand-logo" aria-hidden="true">Ω</span>
+      <h2 id="about-title">omni-calculateur</h2>
+      <p class="about-version">Version 1.2.0</p>
+      <p>Calculatrice scientifique, convertisseur de devises et d’unités,
+        outils de pourcentages. Tout se passe sur cet appareil, sans compte,
+        même hors ligne.</p>
+
+      <div class="about-credit">
+        <p>Application réalisée par <strong>Ferrus Dantioch</strong>.</p>
+        <p>© 2026 Ferrus Dantioch. omni-calculateur est publiée sous licence
+          <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.fr"
+             target="_blank" rel="noopener">Creative Commons BY-NC-ND 4.0</a> :
+          vous pouvez la partager librement en citant son auteur, mais pas la
+          vendre ni la modifier.</p>
+        <a class="button-secondary about-link"
+           href="https://ferrusdantioch.github.io/omni-systeme/#applications"
+           target="_blank" rel="noopener">Découvrir les autres applications Omni</a>
+      </div>
+
+      <button class="about-close" type="submit">Fermer</button>
+    </form>
+  </dialog>
 
   <!-- Petit message temporaire (« Copié »). -->
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
