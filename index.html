@@ -33,6 +33,12 @@
     }());
   </script>
 
+  <!-- Polices du portfolio Omni-système, utilisées par le thème « Violet Nuit ».
+       Sans connexion, l'application garde des polices de secours. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oxanium:wght@500;700;800&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=JetBrains+Mono:wght@500;700&display=swap">
+
   <link rel="stylesheet" href="./style.css">
   <script src="./app.js" defer></script>
 </head>
@@ -194,14 +200,16 @@
 
           <div class="field">
             <label for="amount">Montant</label>
+            <!-- Champ texte plutôt que « number » : sur mobile en français,
+                 un champ « number » refuse souvent la virgule décimale. -->
             <input
               id="amount"
-              type="number"
+              type="text"
               value="1"
-              min="0"
-              step="any"
               inputmode="decimal"
+              enterkeyhint="done"
               autocomplete="off"
+              spellcheck="false"
             >
           </div>
 

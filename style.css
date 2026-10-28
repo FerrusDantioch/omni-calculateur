@@ -35,22 +35,30 @@
   --shadow: 0 14px 40px rgb(0 0 0 / 28%);
 }
 
+/*
+ * « Violet Nuit » : mêmes couleurs et mêmes polices que le portfolio
+ * Omni-système (fond #14111d, surfaces #1d1929, violet du logo #a777ff).
+ */
 :root[data-theme="nuit"] {
   color-scheme: dark;
-  --bg: #0d0916;
-  --surface: #191126;
-  --surface-2: #251838;
-  --key: #281b3b;
-  --key-hover: #37234f;
-  --text: #f7f1ff;
-  --muted: #c8badb;
-  --border: #4a3464;
-  --accent: #d0b2ff;
-  --accent-contrast: #211131;
-  --equal-bg: #7c3aed;
-  --equal-text: #ffffff;
-  --danger: #ffb0ba;
-  --shadow: 0 16px 45px rgb(0 0 0 / 38%);
+  --bg: #14111d;
+  --surface: #1d1929;
+  --surface-2: #14111d;
+  --key: #262036;
+  --key-hover: #302945;
+  --text: #e9e4f2;
+  --muted: #a59cbb;
+  --border: #332c47;
+  --accent: #a777ff;
+  --accent-contrast: #140d24;
+  --halo: #d6c2ff;
+  --equal-bg: #a777ff;
+  --equal-text: #140d24;
+  --danger: #ff8fa3;
+  --shadow: 0 16px 45px rgb(0 0 0 / 40%);
+  --f-titre: "Oxanium", "Trebuchet MS", system-ui, sans-serif;
+  --f-texte: "Literata", Georgia, "Times New Roman", serif;
+  --f-chiffres: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
 }
 
 * {
@@ -189,7 +197,7 @@ input {
 
 .theme-control select {
   width: auto;
-  max-width: 230px;
+  max-width: 270px;
   min-height: 44px;
 }
 
@@ -592,6 +600,65 @@ footer {
 
   .currency-selects {
     gap: 5px;
+  }
+}
+
+/* ------------------------------------------------------------------
+   Violet Nuit : typographie du portfolio
+   Oxanium pour les titres et commandes, Literata pour les textes,
+   JetBrains Mono pour les nombres.
+------------------------------------------------------------------ */
+
+:root[data-theme="nuit"] body {
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 7%, transparent), transparent 38%),
+    var(--bg);
+  font-family: var(--f-texte);
+}
+
+:root[data-theme="nuit"] h1,
+:root[data-theme="nuit"] h2,
+:root[data-theme="nuit"] button,
+:root[data-theme="nuit"] select,
+:root[data-theme="nuit"] label,
+:root[data-theme="nuit"] .conversion-label {
+  font-family: var(--f-titre);
+}
+
+:root[data-theme="nuit"] .brand-logo {
+  border: 2px solid var(--accent);
+  background: radial-gradient(circle at 50% 45%, #2b1f4d, var(--bg) 70%);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 40%, transparent);
+  color: var(--halo);
+}
+
+:root[data-theme="nuit"] .calc-display,
+:root[data-theme="nuit"] .calc-expression,
+:root[data-theme="nuit"] #conversion-result,
+:root[data-theme="nuit"] .history-entry strong,
+:root[data-theme="nuit"] input {
+  font-family: var(--f-chiffres);
+}
+
+:root[data-theme="nuit"] .history-entry strong,
+:root[data-theme="nuit"] #conversion-result {
+  color: var(--halo);
+}
+
+:root[data-theme="nuit"] .tab[aria-selected="true"] {
+  letter-spacing: 0.04em;
+}
+
+:root[data-theme="nuit"] button:focus-visible,
+:root[data-theme="nuit"] input:focus-visible,
+:root[data-theme="nuit"] select:focus-visible {
+  outline-color: var(--halo);
+}
+
+@media (hover: hover) {
+  :root[data-theme="nuit"] .key.equal:hover {
+    background: var(--halo);
+    filter: none;
   }
 }
 

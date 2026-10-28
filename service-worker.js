@@ -1,7 +1,11 @@
 "use strict";
 
-const CACHE_NAME = "omni-shell-v1.0.2";
+const CACHE_NAME = "omni-shell-v1.0.3";
 const CACHE_PREFIX = "omni-shell-";
+
+// Polices Google du thème « Violet Nuit », gardées pour le hors ligne.
+const FONT_CACHE = "omni-fonts-v1";
+const FONT_HOSTS = ["fonts.googleapis.com", "fonts.gstatic.com"];
 
 const INDEX_URL = new URL(
   "./index.html",
@@ -25,7 +29,13 @@ const APP_SHELL = [
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(APP_SHELL))
+      /*
+       * « reload » contourne le cache HTTP du navigateur : sans cela,
+       * une nouvelle version pouvait enregistrer d'anciens fichiers.
+       */
+      .then((cache) => cache.addAll(
+        APP_SHELL.map((url) => new Request(url, { cache: "reload" }))
+      ))
       .then(() => self.skipWaiting())
   );
 });
@@ -57,6 +67,27 @@ self.addEventListener("fetch", (event) => {
   }
 
   const url = new URL(request.url);
+
+  if (FONT_HOSTS.includes(url.hostname)) {
+    event.respondWith((async () => {
+      const cache = await caches.open(FONT_CACHE);
+      const cachedFont = await cache.match(request);
+
+      if (cachedFont) {
+        return cachedFont;
+      }
+
+      const fontResponse = await fetch(request);
+
+      if (fontResponse.ok) {
+        await cache.put(request, fontResponse.clone());
+      }
+
+      return fontResponse;
+    })());
+
+    return;
+  }
 
   /*
    * Les requêtes vers l'API Frankfurter ne sont pas interceptées.
