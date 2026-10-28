@@ -825,6 +825,90 @@ fieldset.field legend {
   font-weight: 750;
 }
 
+/* Bouton rond « i » à côté du thème, et fenêtre « À propos » */
+.about-button {
+  display: grid;
+  width: 44px;
+  min-height: 44px;
+  padding: 0;
+  place-items: center;
+}
+
+
+.about-dialog {
+  width: min(460px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+/* Marge sur le formulaire : un appui sur le fond (hors formulaire) ferme. */
+.about-dialog form {
+  padding: 24px;
+}
+
+.about-dialog::backdrop {
+  background: rgb(0 0 0 / 45%);
+}
+
+.about-dialog h2 {
+  margin: 14px 0 2px;
+  font-size: 1.35rem;
+}
+
+.about-dialog p {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.about-dialog .about-version {
+  margin-top: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.about-credit {
+  margin: 18px 0;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--surface-2);
+}
+
+.about-credit p {
+  margin: 0 0 10px;
+  color: var(--text);
+}
+
+.about-credit a {
+  color: inherit;
+  text-decoration-color: var(--accent);
+  text-underline-offset: 3px;
+}
+
+.about-credit .about-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 4px;
+  text-align: center;
+  text-decoration: none;
+}
+
+.about-close {
+  width: 100%;
+  min-height: 46px;
+  border: 0;
+  border-radius: 11px;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 750;
+}
+
 .conversion-card {
   margin-top: 22px;
   padding: 18px;

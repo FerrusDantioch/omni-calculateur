@@ -1955,6 +1955,23 @@
   updatePercentages();
 
   /* ------------------------------------------------------------------
+     À propos
+  ------------------------------------------------------------------ */
+
+  const aboutDialog = $("#about-dialog");
+
+  $("#about-button").addEventListener("click", () => {
+    aboutDialog.showModal();
+  });
+
+  // Un appui à côté de la fenêtre la ferme aussi.
+  aboutDialog.addEventListener("click", (event) => {
+    if (event.target === aboutDialog) {
+      aboutDialog.close();
+    }
+  });
+
+  /* ------------------------------------------------------------------
      Installation et Service Worker
   ------------------------------------------------------------------ */
 
