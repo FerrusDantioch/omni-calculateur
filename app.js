@@ -33,7 +33,7 @@
   const themeColors = {
     clair: "#f4f6fb",
     sombre: "#0f141b",
-    nuit: "#0d0916"
+    nuit: "#14111d"
   };
 
   function applyTheme(theme, persist = true) {
@@ -667,11 +667,19 @@
     }
 
     current = item.result;
-    previous = null;
-    pendingOperator = null;
-    waitingForOperand = true;
-    overwriteCurrent = false;
-    lastExpression = "";
+
+    if (pendingOperator && previous !== null) {
+      // Calcul en cours (ex. « 5 + ») : le résultat repris
+      // devient le second nombre au lieu d'annuler le calcul.
+      waitingForOperand = false;
+      overwriteCurrent = true;
+    } else {
+      previous = null;
+      pendingOperator = null;
+      waitingForOperand = true;
+      overwriteCurrent = false;
+      lastExpression = "";
+    }
 
     updateDisplay();
   });
@@ -790,11 +798,14 @@
   }
 
   function updateConversion() {
-    const rawAmount = amountInput.value.trim();
+    // Accepte « 1,5 », « 1.5 » et « 1 000 » (espaces de milliers).
+    const rawAmount = amountInput.value
+      .replace(/[\s  ]/g, "")
+      .replace(",", ".");
 
-    const amount = Number(
-      rawAmount.replace(",", ".")
-    );
+    const amount = /^\d*\.?\d+$|^\d+\.$/.test(rawAmount)
+      ? Number(rawAmount)
+      : NaN;
 
     const from = fromSelect.value;
     const to = toSelect.value;
