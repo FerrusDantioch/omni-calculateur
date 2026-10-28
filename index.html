@@ -7,7 +7,7 @@
     content="width=device-width, initial-scale=1, viewport-fit=cover"
   >
   <meta name="description"
-        content="Calculatrice scientifique et convertisseur de devises utilisables hors ligne.">
+        content="Calculatrice scientifique, convertisseur de devises et d’unités, outils de pourcentages, utilisables hors ligne.">
   <meta name="theme-color" id="theme-color-meta" content="#f4f6fb">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -50,7 +50,7 @@
         <span class="brand-logo" aria-hidden="true">Ω</span>
         <div>
           <h1>omni-calculateur</h1>
-          <p>Calculs et devises, même hors ligne</p>
+          <p>Calculs, devises et unités, même hors ligne</p>
         </div>
       </div>
 
@@ -80,7 +80,7 @@
         aria-selected="true"
         aria-controls="panel-calculatrice"
       >
-        Calculatrice
+        Calcul
       </button>
 
       <button
@@ -93,7 +93,33 @@
         aria-controls="panel-devises"
         tabindex="-1"
       >
-        Convertisseur
+        Devises
+      </button>
+
+      <button
+        id="tab-unites"
+        class="tab"
+        type="button"
+        role="tab"
+        data-tab="unites"
+        aria-selected="false"
+        aria-controls="panel-unites"
+        tabindex="-1"
+      >
+        Unités
+      </button>
+
+      <button
+        id="tab-outils"
+        class="tab"
+        type="button"
+        role="tab"
+        data-tab="outils"
+        aria-selected="false"
+        aria-controls="panel-outils"
+        tabindex="-1"
+      >
+        Outils
       </button>
     </nav>
 
@@ -107,15 +133,22 @@
       >
         <div class="calculator-layout">
           <div class="calculator" aria-label="Calculatrice universelle">
-            <div class="calculator-screen">
-              <div id="calc-expression" class="calc-expression"></div>
+            <!-- Toucher l'écran copie le nombre affiché. -->
+            <button
+              id="calc-screen"
+              class="calculator-screen"
+              type="button"
+              title="Copier le résultat"
+            >
+              <span class="copy-hint" aria-hidden="true">Copier</span>
+              <span id="calc-expression" class="calc-expression"></span>
               <output
                 id="calc-display"
                 class="calc-display"
                 aria-label="Résultat du calcul"
                 aria-live="polite"
               >0</output>
-            </div>
+            </button>
 
             <div class="scientific-keys" aria-label="Fonctions scientifiques">
               <button class="key scientific" type="button"
@@ -169,6 +202,12 @@
               <button class="key equal" type="button"
                       data-action="equals" aria-label="Calculer le résultat">=</button>
             </div>
+
+            <!-- Affiché seulement si l'appareil sait vibrer (pas sur iPhone). -->
+            <label id="vibration-setting" class="switch" hidden>
+              <input id="vibration-toggle" type="checkbox">
+              <span>Vibrer à chaque touche</span>
+            </label>
           </div>
 
           <aside class="history" aria-labelledby="history-title">
@@ -178,7 +217,10 @@
                 Effacer
               </button>
             </div>
-            <p class="history-help">Sélectionnez un résultat pour le réutiliser.</p>
+            <p class="history-help">
+              Touchez un calcul pour reprendre son résultat,
+              ou <span aria-hidden="true">⧉</span> pour le copier.
+            </p>
             <ul id="history-list" class="history-list"></ul>
           </aside>
         </div>
@@ -215,7 +257,12 @@
 
           <div class="currency-selects">
             <div class="field">
-              <label for="from-currency">De</label>
+              <div class="field-head">
+                <label for="from-currency">De</label>
+                <button class="star-button" type="button"
+                        data-favorite-for="from-currency"
+                        aria-pressed="false">☆</button>
+              </div>
               <select id="from-currency"></select>
             </div>
 
@@ -228,17 +275,31 @@
             >⇄</button>
 
             <div class="field">
-              <label for="to-currency">Vers</label>
+              <div class="field-head">
+                <label for="to-currency">Vers</label>
+                <button class="star-button" type="button"
+                        data-favorite-for="to-currency"
+                        aria-pressed="false">☆</button>
+              </div>
               <select id="to-currency"></select>
             </div>
           </div>
+
+          <p class="favorite-help">
+            L’étoile <span aria-hidden="true">☆</span> range la devise choisie
+            dans vos favoris, en haut des listes.
+          </p>
 
           <div class="conversion-card">
             <span class="conversion-label">Résultat</span>
             <output
               id="conversion-result"
+              class="copyable"
               for="amount from-currency to-currency"
               aria-live="polite"
+              tabindex="0"
+              role="button"
+              title="Copier le résultat"
             >—</output>
             <p id="unit-rate" class="unit-rate"></p>
           </div>
@@ -258,6 +319,184 @@
           </p>
         </div>
       </section>
+
+      <!-- Convertisseur d'unités -->
+      <section
+        id="panel-unites"
+        class="panel"
+        role="tabpanel"
+        aria-labelledby="tab-unites"
+        hidden
+      >
+        <div class="converter">
+          <h2>Convertisseur d’unités</h2>
+          <p class="section-intro">
+            Longueurs, poids, températures, cuisine… sans connexion.
+          </p>
+
+          <div class="field">
+            <label for="unit-category">Grandeur</label>
+            <select id="unit-category"></select>
+          </div>
+
+          <div class="field">
+            <label for="unit-value">Valeur</label>
+            <input
+              id="unit-value"
+              type="text"
+              value="1"
+              inputmode="decimal"
+              enterkeyhint="done"
+              autocomplete="off"
+              spellcheck="false"
+            >
+          </div>
+
+          <div class="currency-selects">
+            <div class="field">
+              <label for="unit-from">De</label>
+              <select id="unit-from"></select>
+            </div>
+
+            <button
+              id="swap-units"
+              class="swap-button"
+              type="button"
+              aria-label="Inverser les unités"
+              title="Inverser les unités"
+            >⇄</button>
+
+            <div class="field">
+              <label for="unit-to">Vers</label>
+              <select id="unit-to"></select>
+            </div>
+          </div>
+
+          <div class="conversion-card">
+            <span class="conversion-label">Résultat</span>
+            <output
+              id="unit-result"
+              class="copyable"
+              for="unit-value unit-from unit-to"
+              aria-live="polite"
+              tabindex="0"
+              role="button"
+              title="Copier le résultat"
+            >—</output>
+            <p id="unit-detail" class="unit-rate"></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Outils pratiques -->
+      <section
+        id="panel-outils"
+        class="panel"
+        role="tabpanel"
+        aria-labelledby="tab-outils"
+        hidden
+      >
+        <div class="tools">
+          <form class="tool" id="tool-bill" autocomplete="off">
+            <h2>Addition et pourboire</h2>
+            <p class="section-intro">Partagez une addition entre amis.</p>
+
+            <div class="field">
+              <label for="bill-amount">Montant de l’addition</label>
+              <input id="bill-amount" type="text" inputmode="decimal"
+                     enterkeyhint="done" placeholder="Par exemple 86,40">
+            </div>
+
+            <fieldset class="field">
+              <legend>Pourboire</legend>
+              <div class="chips" id="tip-chips">
+                <button type="button" class="chip" data-tip="0">0 %</button>
+                <button type="button" class="chip" data-tip="5">5 %</button>
+                <button type="button" class="chip" data-tip="10">10 %</button>
+                <button type="button" class="chip" data-tip="15">15 %</button>
+                <button type="button" class="chip" data-tip="20">20 %</button>
+              </div>
+              <label class="inline-field">
+                <span>Autre :</span>
+                <input id="tip-percent" type="text" inputmode="decimal"
+                       enterkeyhint="done" value="0" aria-label="Pourboire en pourcentage">
+                <span>%</span>
+              </label>
+            </fieldset>
+
+            <div class="field">
+              <span class="field-label" id="people-label">Nombre de personnes</span>
+              <div class="stepper" role="group" aria-labelledby="people-label">
+                <button type="button" class="stepper-button" data-people-step="-1"
+                        aria-label="Une personne de moins">−</button>
+                <output id="people-count" aria-live="polite">1</output>
+                <button type="button" class="stepper-button" data-people-step="1"
+                        aria-label="Une personne de plus">+</button>
+              </div>
+            </div>
+
+            <dl class="tool-results">
+              <div><dt>Pourboire</dt><dd id="bill-tip" class="copyable" tabindex="0" role="button">—</dd></div>
+              <div><dt>Total</dt><dd id="bill-total" class="copyable" tabindex="0" role="button">—</dd></div>
+              <div class="main-result"><dt>Par personne</dt><dd id="bill-share" class="copyable" tabindex="0" role="button">—</dd></div>
+            </dl>
+          </form>
+
+          <form class="tool" id="tool-discount" autocomplete="off">
+            <h2>Remise</h2>
+            <p class="section-intro">Le prix après une réduction en pourcentage.</p>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="discount-price">Prix</label>
+                <input id="discount-price" type="text" inputmode="decimal"
+                       enterkeyhint="done" placeholder="Par exemple 59,90">
+              </div>
+              <div class="field">
+                <label for="discount-percent">Remise (%)</label>
+                <input id="discount-percent" type="text" inputmode="decimal"
+                       enterkeyhint="done" placeholder="Par exemple 30">
+              </div>
+            </div>
+
+            <dl class="tool-results">
+              <div><dt>Économie</dt><dd id="discount-saving" class="copyable" tabindex="0" role="button">—</dd></div>
+              <div class="main-result"><dt>Prix final</dt><dd id="discount-final" class="copyable" tabindex="0" role="button">—</dd></div>
+            </dl>
+          </form>
+
+          <form class="tool" id="tool-percent" autocomplete="off">
+            <h2>Pourcentages</h2>
+
+            <p class="tool-question">Combien font
+              <input id="pct-of-rate" class="mini-input" type="text" inputmode="decimal"
+                     enterkeyhint="done" aria-label="Pourcentage" placeholder="20"> %
+              de
+              <input id="pct-of-base" class="mini-input" type="text" inputmode="decimal"
+                     enterkeyhint="done" aria-label="Nombre" placeholder="150"> ?
+            </p>
+            <p class="tool-answer"><output id="pct-of-result" class="copyable" tabindex="0" role="button">—</output></p>
+
+            <p class="tool-question">
+              <input id="pct-part" class="mini-input" type="text" inputmode="decimal"
+                     enterkeyhint="done" aria-label="Partie" placeholder="30">
+              représente quel pourcentage de
+              <input id="pct-whole" class="mini-input" type="text" inputmode="decimal"
+                     enterkeyhint="done" aria-label="Total" placeholder="120"> ?
+            </p>
+            <p class="tool-answer"><output id="pct-share-result" class="copyable" tabindex="0" role="button">—</output></p>
+
+            <p class="tool-question">Évolution de
+              <input id="pct-from" class="mini-input" type="text" inputmode="decimal"
+                     enterkeyhint="done" aria-label="Valeur de départ" placeholder="80">
+              à
+              <input id="pct-to" class="mini-input" type="text" inputmode="decimal"
+                     enterkeyhint="done" aria-label="Valeur d’arrivée" placeholder="100"> ?
+            </p>
+            <p class="tool-answer"><output id="pct-change-result" class="copyable" tabindex="0" role="button">—</output></p>
+          </form>
+        </div>
+      </section>
     </main>
 
     <footer>
@@ -265,9 +504,18 @@
     </footer>
   </div>
 
+  <!-- Petit message temporaire (« Copié »). -->
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <!-- Proposé quand une nouvelle version de l'application est prête. -->
+  <div id="update-banner" class="update-banner" role="alert" hidden>
+    <span>Une nouvelle version est disponible.</span>
+    <button id="update-button" type="button">Mettre à jour</button>
+  </div>
+
   <noscript>
     <p class="noscript-message">
-      JavaScript doit être activé pour utiliser la calculatrice et le convertisseur.
+      JavaScript doit être activé pour utiliser la calculatrice et les convertisseurs.
     </p>
   </noscript>
 </body>

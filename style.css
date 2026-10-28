@@ -203,7 +203,7 @@ input {
 
 .tabs {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
   margin-bottom: 12px;
   padding: 5px;
@@ -213,8 +213,9 @@ input {
 }
 
 .tab {
+  min-width: 0;
   min-height: 48px;
-  padding: 8px 12px;
+  padding: 8px 4px;
   border: 0;
   border-radius: 11px;
   background: transparent;
@@ -245,6 +246,9 @@ input {
 }
 
 .calculator-screen {
+  position: relative;
+  display: block;
+  width: 100%;
   min-width: 0;
   margin-bottom: 12px;
   padding: 15px 16px;
@@ -252,7 +256,30 @@ input {
   border: 1px solid var(--border);
   border-radius: 15px;
   background: var(--surface-2);
+  color: var(--text);
   text-align: right;
+  cursor: copy;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.calculator-screen:active {
+  border-color: var(--accent);
+}
+
+.copy-hint {
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+  text-transform: uppercase;
+}
+
+.calc-expression {
+  display: block;
 }
 
 .calc-expression {
@@ -394,11 +421,34 @@ input {
 }
 
 .history-list li {
+  display: flex;
+  align-items: stretch;
   border-bottom: 1px solid var(--border);
+}
+
+.history-list li.history-empty {
+  display: list-item;
+  border-bottom: 0;
+}
+
+.history-copy {
+  flex: 0 0 48px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.15rem;
+}
+
+@media (hover: hover) {
+  .history-copy:hover {
+    color: var(--accent);
+  }
 }
 
 .history-entry {
   display: block;
+  flex: 1 1 auto;
+  min-width: 0;
   width: 100%;
   min-height: 58px;
   padding: 9px 6px;
@@ -453,9 +503,66 @@ input {
   margin-top: 16px;
 }
 
-.field label {
+.field label,
+.field legend,
+.field-label {
   font-size: 0.9rem;
   font-weight: 750;
+}
+
+.field-head {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 30px;
+}
+
+.star-button {
+  min-width: 36px;
+  min-height: 30px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--accent);
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.favorite-help {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.copyable {
+  cursor: copy;
+  border-radius: 8px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.copyable:active {
+  opacity: 0.7;
+}
+
+/* Interrupteur « Vibrer à chaque touche » */
+.switch {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.switch input {
+  width: 22px;
+  min-height: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--accent);
 }
 
 .currency-selects {
@@ -475,6 +582,247 @@ input {
   background: var(--surface-2);
   color: var(--accent);
   font-size: 1.35rem;
+}
+
+#unit-result {
+  display: block;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+  color: var(--accent);
+  font-size: clamp(1.5rem, 6.5vw, 2.4rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 750;
+}
+
+/* ------------------------------------------------------------------
+   Outils
+------------------------------------------------------------------ */
+
+.tools {
+  display: grid;
+  gap: 18px;
+  max-width: 650px;
+  margin: 0 auto;
+}
+
+.tool {
+  padding: 4px 0 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tool:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.tool h2 {
+  margin: 2px 0 0;
+  font-size: 1.25rem;
+}
+
+.tool .section-intro {
+  margin: 4px 0 0;
+}
+
+fieldset.field {
+  margin-inline: 0;
+  padding: 0;
+  border: 0;
+}
+
+fieldset.field legend {
+  margin-bottom: 6px;
+  padding: 0;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  min-width: 56px;
+  min-height: 42px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.chip[aria-pressed="true"] {
+  border-color: transparent;
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.inline-field {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.inline-field input {
+  width: 6em;
+  min-height: 42px;
+}
+
+.stepper {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.stepper-button {
+  width: 48px;
+  height: 46px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+  color: var(--accent);
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+#people-count {
+  min-width: 2.5ch;
+  font-size: 1.3rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 750;
+  text-align: center;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+.tool-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  margin: 16px 0 0;
+}
+
+.tool-results div {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.tool-results dt {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.tool-results dd {
+  margin: 2px 0 0;
+  overflow-wrap: anywhere;
+  font-size: 1.2rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 750;
+}
+
+.tool-results .main-result dd {
+  color: var(--accent);
+  font-size: 1.45rem;
+}
+
+.tool-question {
+  margin: 16px 0 0;
+  line-height: 2.6;
+}
+
+.mini-input {
+  display: inline-block;
+  width: 5.5em;
+  min-height: 42px;
+  padding: 0 8px;
+  text-align: center;
+}
+
+.tool-answer {
+  margin: 2px 0 0;
+}
+
+.tool-answer output {
+  display: inline-block;
+  padding: 2px 4px;
+  color: var(--accent);
+  font-size: 1.3rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 750;
+}
+
+/* ------------------------------------------------------------------
+   Message « Copié » et bandeau de mise à jour
+------------------------------------------------------------------ */
+
+.toast {
+  position: fixed;
+  z-index: 20;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  left: 50%;
+  max-width: calc(100% - 32px);
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 0.92rem;
+  font-weight: 700;
+  pointer-events: none;
+  transform: translateX(-50%);
+  box-shadow: var(--shadow);
+}
+
+.toast.visible {
+  animation: toast-in 0.18s ease-out;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+}
+
+.update-banner {
+  position: fixed;
+  z-index: 30;
+  right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  left: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 12px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.update-banner button {
+  min-height: 42px;
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 750;
 }
 
 .conversion-card {
@@ -576,7 +924,41 @@ footer {
   }
 }
 
+/*
+ * Téléphones : « De » et « Vers » l'un sous l'autre, pour lire le nom
+ * entier des devises et des unités ; le bouton d'inversion passe à droite.
+ */
+@media (max-width: 520px) {
+  .currency-selects {
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 10px;
+    row-gap: 0;
+  }
+
+  .currency-selects .field:first-child {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  .currency-selects .field:last-child {
+    grid-row: 2;
+    grid-column: 1;
+  }
+
+  .currency-selects .swap-button {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+    align-self: center;
+    margin-top: 40px;
+    transform: rotate(90deg);
+  }
+}
+
 @media (max-width: 380px) {
+  .tab {
+    font-size: 0.88rem;
+  }
+
   .header-actions {
     width: 100%;
     justify-content: space-between;
@@ -635,14 +1017,30 @@ footer {
 :root[data-theme="nuit"] .calc-display,
 :root[data-theme="nuit"] .calc-expression,
 :root[data-theme="nuit"] #conversion-result,
+:root[data-theme="nuit"] #unit-result,
+:root[data-theme="nuit"] #people-count,
+:root[data-theme="nuit"] .tool-results dd,
+:root[data-theme="nuit"] .tool-answer output,
 :root[data-theme="nuit"] .history-entry strong,
 :root[data-theme="nuit"] input {
   font-family: var(--f-chiffres);
 }
 
 :root[data-theme="nuit"] .history-entry strong,
-:root[data-theme="nuit"] #conversion-result {
+:root[data-theme="nuit"] #conversion-result,
+:root[data-theme="nuit"] #unit-result,
+:root[data-theme="nuit"] .tool-results .main-result dd,
+:root[data-theme="nuit"] .tool-answer output {
   color: var(--halo);
+}
+
+:root[data-theme="nuit"] .tool h2,
+:root[data-theme="nuit"] .field legend,
+:root[data-theme="nuit"] .field-label,
+:root[data-theme="nuit"] .tool-results dt,
+:root[data-theme="nuit"] .copy-hint,
+:root[data-theme="nuit"] .toast {
+  font-family: var(--f-titre);
 }
 
 :root[data-theme="nuit"] .tab[aria-selected="true"] {
