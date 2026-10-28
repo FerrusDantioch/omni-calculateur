@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "omni-shell-v1.0.3";
+const CACHE_NAME = "omni-shell-v1.1.0";
 const CACHE_PREFIX = "omni-shell-";
 
 // Polices Google du thème « Violet Nuit », gardées pour le hors ligne.
@@ -25,6 +25,9 @@ const APP_SHELL = [
 /*
  * Installation :
  * mise en cache de tous les fichiers nécessaires à l'interface.
+ * Une nouvelle version attend ensuite que l'utilisateur appuie sur
+ * « Mettre à jour » (voir le message SKIP_WAITING plus bas), pour ne
+ * pas changer l'application pendant qu'il s'en sert.
  */
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -36,8 +39,13 @@ self.addEventListener("install", (event) => {
       .then((cache) => cache.addAll(
         APP_SHELL.map((url) => new Request(url, { cache: "reload" }))
       ))
-      .then(() => self.skipWaiting())
   );
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 /*
