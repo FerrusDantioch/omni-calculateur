@@ -1,3 +1,28 @@
+/* Polices du portfolio Omni-système (thème « Violet Nuit »), copiées dans
+   l'application : elles marchent sans internet, aucun site n'est contacté.
+   Licence : SIL Open Font License 1.1 (fichier POLICES-OFL.txt). */
+@font-face {
+  font-family: "Oxanium";
+  src: url("./oxanium.woff2") format("woff2");
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Literata";
+  src: url("./literata.woff2") format("woff2");
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("./jetbrains-mono.woff2") format("woff2");
+  font-weight: 400 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root,
 :root[data-theme="clair"] {
   color-scheme: light;

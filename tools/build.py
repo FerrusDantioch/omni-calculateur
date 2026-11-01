@@ -123,6 +123,10 @@ def main():
         "service-worker.js",
         "icons/icon-192.png",
         "icons/icon-512.png",
+        "oxanium.woff2",
+        "literata.woff2",
+        "jetbrains-mono.woff2",
+        "POLICES-OFL.txt",
         "tools/build.py"
     ]
 
