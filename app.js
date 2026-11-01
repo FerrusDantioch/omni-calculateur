@@ -181,7 +181,7 @@
      Thèmes
   ------------------------------------------------------------------ */
 
-  const THEME_KEY = "omni-theme";
+  const THEME_KEY = "omni-calculateur-theme";
   const themeSelect = $("#theme-select");
   const themeMeta = $("#theme-color-meta");
 
@@ -274,7 +274,7 @@
   const historyList = $("#history-list");
   const clearHistoryButton = $("#clear-history");
 
-  const HISTORY_KEY = "omni-history-v1";
+  const HISTORY_KEY = "omni-calculateur-history-v1";
   const MAX_HISTORY = 40;
 
   const operatorSymbols = {
@@ -298,8 +298,11 @@
     }
 
     // Limite les artefacts comme 0.1 + 0.2 = 0.30000000000000004.
+    // 15 chiffres significatifs (comme les tableurs) : avec 12, un grand
+    // nombre perdait ses derniers chiffres (123456789012345 + 0 donnait
+    // 123456789012000).
     return String(
-      Number.parseFloat(value.toPrecision(12))
+      Number.parseFloat(value.toPrecision(15))
     );
   }
 
@@ -403,7 +406,8 @@
     } else {
       const digitCount = current.replace(/\D/g, "").length;
 
-      if (digitCount >= 16) {
+      // Au-delà de 15 chiffres, un ordinateur ne calcule plus exactement.
+      if (digitCount >= 15) {
         return;
       }
 
@@ -678,7 +682,7 @@
   }
 
   /* Vibration légère des touches (Android ; l'iPhone ne sait pas). */
-  const VIBRATION_KEY = "omni-vibration";
+  const VIBRATION_KEY = "omni-calculateur-vibration";
   const vibrationSetting = $("#vibration-setting");
   const vibrationToggle = $("#vibration-toggle");
   const canVibrate = typeof navigator.vibrate === "function";
@@ -947,9 +951,9 @@
   };
 
   const CURRENCY_CODES = Object.keys(CURRENCIES);
-  const RATES_KEY = "omni-rates-v1";
-  const FAVORITES_KEY = "omni-favorite-currencies-v1";
-  const PAIR_KEY = "omni-currency-pair-v1";
+  const RATES_KEY = "omni-calculateur-rates-v1";
+  const FAVORITES_KEY = "omni-calculateur-favorite-currencies-v1";
+  const PAIR_KEY = "omni-calculateur-currency-pair-v1";
   const DEFAULT_FAVORITES = ["EUR", "USD", "GBP", "CHF", "CAD", "JPY"];
 
   /*
@@ -1646,7 +1650,7 @@
     }
   ];
 
-  const UNITS_KEY = "omni-units-v1";
+  const UNITS_KEY = "omni-calculateur-units-v1";
   const unitCategorySelect = $("#unit-category");
   const unitValueInput = $("#unit-value");
   const unitFromSelect = $("#unit-from");

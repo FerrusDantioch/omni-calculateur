@@ -1,11 +1,15 @@
 "use strict";
 
-const CACHE_NAME = "omni-shell-v1.2.1";
-const CACHE_PREFIX = "omni-shell-";
+const CACHE_NAME = "omni-calculateur-v1.3.0";
+const CACHE_PREFIX = "omni-calculateur-";
 
-// Polices Google du thème « Violet Nuit », gardées pour le hors ligne.
-const FONT_CACHE = "omni-fonts-v1";
-const FONT_HOSTS = ["fonts.googleapis.com", "fonts.gstatic.com"];
+/*
+ * Anciens caches des versions 1.2 et avant, aux noms trop généraux
+ * (« omni-shell-… », « omni-fonts-v1 ») : effacés à l'activation.
+ * Toutes les applications du site partagent le même espace de caches,
+ * d'où un nom propre au Calculateur.
+ */
+const ANCIENS_CACHES = (key) => key.startsWith("omni-shell-") || key === "omni-fonts-v1";
 
 const INDEX_URL = new URL(
   "./index.html",
@@ -19,7 +23,10 @@ const APP_SHELL = [
   "./app.js",
   "./manifest.json",
   "./icons/icon-192.png",
-  "./icons/icon-512.png"
+  "./icons/icon-512.png",
+  "./oxanium.woff2",
+  "./literata.woff2",
+  "./jetbrains-mono.woff2"
 ];
 
 /*
@@ -58,8 +65,8 @@ self.addEventListener("activate", (event) => {
       .then((keys) => Promise.all(
         keys
           .filter((key) =>
-            key.startsWith(CACHE_PREFIX) &&
-            key !== CACHE_NAME
+            (key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME) ||
+            ANCIENS_CACHES(key)
           )
           .map((key) => caches.delete(key))
       ))
@@ -76,27 +83,6 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
 
-  if (FONT_HOSTS.includes(url.hostname)) {
-    event.respondWith((async () => {
-      const cache = await caches.open(FONT_CACHE);
-      const cachedFont = await cache.match(request);
-
-      if (cachedFont) {
-        return cachedFont;
-      }
-
-      const fontResponse = await fetch(request);
-
-      if (fontResponse.ok) {
-        await cache.put(request, fontResponse.clone());
-      }
-
-      return fontResponse;
-    })());
-
-    return;
-  }
-
   /*
    * Les requêtes vers l'API Frankfurter ne sont pas interceptées.
    * Leur téléchargement, leur stockage et leur repli hors ligne
@@ -112,7 +98,7 @@ self.addEventListener("fetch", (event) => {
    */
   if (request.mode === "navigate") {
     event.respondWith((async () => {
-      const cachedIndex = await caches.match(INDEX_URL);
+      const cachedIndex = await (await caches.open(CACHE_NAME)).match(INDEX_URL);
 
       if (cachedIndex) {
         return cachedIndex;
@@ -148,7 +134,8 @@ self.addEventListener("fetch", (event) => {
    * cache-first, puis réseau si la ressource n'est pas en cache.
    */
   event.respondWith((async () => {
-    const cachedResponse = await caches.match(request);
+    // Seulement dans le cache du Calculateur (pas celui d'une autre application).
+    const cachedResponse = await (await caches.open(CACHE_NAME)).match(request);
 
     if (cachedResponse) {
       return cachedResponse;

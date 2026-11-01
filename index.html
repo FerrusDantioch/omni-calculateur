@@ -23,7 +23,27 @@
   <script>
     (function () {
       try {
-        var theme = localStorage.getItem("omni-theme");
+        /*
+         * Toutes les applications de ferrusdantioch.github.io partagent le
+         * même stockage : les noms commencent donc par « omni-calculateur- ».
+         * Les réglages enregistrés sous les anciens noms (version 1.2 et
+         * avant) sont recopiés une fois, puis les anciens noms effacés.
+         */
+        var anciens = ["omni-theme", "omni-history-v1", "omni-vibration",
+          "omni-rates-v1", "omni-favorite-currencies-v1",
+          "omni-currency-pair-v1", "omni-units-v1"];
+        anciens.forEach(function (ancien) {
+          var valeur = localStorage.getItem(ancien);
+          var nouveau = ancien.replace("omni-", "omni-calculateur-");
+          if (valeur !== null) {
+            if (localStorage.getItem(nouveau) === null) {
+              localStorage.setItem(nouveau, valeur);
+            }
+            localStorage.removeItem(ancien);
+          }
+        });
+
+        var theme = localStorage.getItem("omni-calculateur-theme");
         if (["clair", "sombre", "nuit"].indexOf(theme) !== -1) {
           document.documentElement.dataset.theme = theme;
         }
@@ -32,12 +52,6 @@
       }
     }());
   </script>
-
-  <!-- Polices du portfolio Omni-système, utilisées par le thème « Violet Nuit ».
-       Sans connexion, l'application garde des polices de secours. -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oxanium:wght@500;700;800&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=JetBrains+Mono:wght@500;700&display=swap">
 
   <link rel="stylesheet" href="./style.css">
   <script src="./app.js" defer></script>
@@ -518,7 +532,7 @@
     <form method="dialog">
       <span class="brand-logo" aria-hidden="true">Ω</span>
       <h2 id="about-title">omni-calculateur</h2>
-      <p class="about-version">Version 1.2.1</p>
+      <p class="about-version">Version 1.3.0</p>
       <p>Calculatrice scientifique, convertisseur de devises et d’unités,
         outils de pourcentages. Tout se passe sur cet appareil, sans compte,
         même hors ligne.</p>
@@ -530,6 +544,8 @@
              target="_blank" rel="noopener">Creative Commons BY-NC-ND 4.0</a> :
           vous pouvez la partager librement en citant son auteur, mais pas la
           vendre ni la modifier.</p>
+        <p><small>Polices de caractères : Oxanium, Literata et JetBrains Mono, sous leur
+          propre licence, la SIL Open Font License 1.1 (fichier POLICES-OFL.txt).</small></p>
         <a class="button-secondary about-link"
            href="https://ferrusdantioch.github.io/omni-systeme/#applications"
            target="_blank" rel="noopener">Découvrir les autres applications Omni</a>
