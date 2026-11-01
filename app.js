@@ -298,8 +298,11 @@
     }
 
     // Limite les artefacts comme 0.1 + 0.2 = 0.30000000000000004.
+    // 15 chiffres significatifs (comme les tableurs) : avec 12, un grand
+    // nombre perdait ses derniers chiffres (123456789012345 + 0 donnait
+    // 123456789012000).
     return String(
-      Number.parseFloat(value.toPrecision(12))
+      Number.parseFloat(value.toPrecision(15))
     );
   }
 
@@ -403,7 +406,8 @@
     } else {
       const digitCount = current.replace(/\D/g, "").length;
 
-      if (digitCount >= 16) {
+      // Au-delà de 15 chiffres, un ordinateur ne calcule plus exactement.
+      if (digitCount >= 15) {
         return;
       }
 
