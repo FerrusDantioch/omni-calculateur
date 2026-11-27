@@ -1,6 +1,15 @@
 (() => {
   "use strict";
 
+  const {
+    parseNumber,
+    numberToString,
+    countSignificantDigits,
+    calculate,
+    evaluateTokens,
+    formatTokens
+  } = globalThis.OmniCalcEngine;
+
   const $ = (selector) => document.querySelector(selector);
 
   function storageGet(key) {
@@ -23,24 +32,6 @@
   /* ------------------------------------------------------------------
      Outils communs : nombres, copie, petit message
   ------------------------------------------------------------------ */
-
-  /*
-   * Lit un nombre tapé à la française ou à l'anglaise :
-   * « 1,5 », « 1.5 », « 1 000 », « -3 ». Renvoie NaN si le texte
-   * n'est pas un nombre.
-   */
-  function parseNumber(text, allowNegative = false) {
-    const raw = String(text)
-      .replace(/[\s  ]/g, "")
-      .replace(",", ".")
-      .replace("−", "-");
-
-    const pattern = allowNegative
-      ? /^-?(\d+\.?\d*|\.\d+)$/
-      : /^(\d+\.?\d*|\.\d+)$/;
-
-    return pattern.test(raw) ? Number(raw) : NaN;
-  }
 
   /*
    * Écrit un nombre lisiblement (« 1 609,344 »). Les nombres très
@@ -87,6 +78,14 @@
    */
   function setCopyable(element, text, copyValue = null) {
     element.textContent = text;
+
+    if (copyValue === false) {
+      delete element.dataset.copyValue;
+      element.dataset.copyDisabled = "true";
+      return;
+    }
+
+    delete element.dataset.copyDisabled;
 
     if (copyValue === null) {
       delete element.dataset.copyValue;
@@ -139,7 +138,7 @@
   }
 
   async function copyText(text) {
-    if (!text || text === "—" || text === "Erreur") {
+    if (!text || text === "—" || text === "Erreur" || text === "Remise > 100 %") {
       return;
     }
 
@@ -157,6 +156,9 @@
 
   /* Tout élément marqué « copyable » se copie quand on le touche. */
   function copyFromElement(element) {
+    if (element.dataset.copyDisabled === "true") {
+      return;
+    }
     copyText(element.dataset.copyValue || element.textContent.trim());
   }
 
@@ -194,7 +196,7 @@
   };
 
   function applyTheme(theme, persist = true) {
-    const safeTheme = validThemes.includes(theme) ? theme : "clair";
+    const safeTheme = validThemes.includes(theme) ? theme : "nuit";
 
     document.documentElement.dataset.theme = safeTheme;
     themeSelect.value = safeTheme;
@@ -230,6 +232,10 @@
       tab.tabIndex = active ? 0 : -1;
       panel.hidden = !active;
     });
+
+    if (name === "devises" && typeof maybeRefreshRates === "function") {
+      maybeRefreshRates();
+    }
   }
 
   tabs.forEach((tab, index) => {
@@ -286,24 +292,24 @@
   };
 
   let current = "0";
-  let previous = null;
-  let pendingOperator = null;
+  let tokens = [];
   let waitingForOperand = false;
   let overwriteCurrent = false;
+  let justEvaluated = false;
+  let lastRepeat = null;
   let lastExpression = "";
 
-  function numberToString(value) {
-    if (Object.is(value, -0)) {
-      value = 0;
+  function openParenCount(list = tokens) {
+    let count = 0;
+    for (const token of list) {
+      if (token.type === "lparen") count++;
+      else if (token.type === "rparen") count--;
     }
+    return count;
+  }
 
-    // Limite les artefacts comme 0.1 + 0.2 = 0.30000000000000004.
-    // 15 chiffres significatifs (comme les tableurs) : avec 12, un grand
-    // nombre perdait ses derniers chiffres (123456789012345 + 0 donnait
-    // 123456789012000).
-    return String(
-      Number.parseFloat(value.toPrecision(15))
-    );
+  function lastToken(list = tokens) {
+    return list.length > 0 ? list[list.length - 1] : null;
   }
 
   function formatDisplay(value) {
@@ -319,9 +325,12 @@
   function updateDisplay() {
     calcDisplay.textContent = formatDisplay(current);
 
-    if (pendingOperator && previous !== null) {
-      calcExpression.textContent =
-        `${formatDisplay(previous)} ${operatorSymbols[pendingOperator]}`;
+    if (tokens.length > 0) {
+      calcExpression.textContent = formatTokens(
+        tokens,
+        operatorSymbols,
+        formatDisplay
+      );
     } else {
       calcExpression.textContent = lastExpression;
     }
@@ -329,10 +338,11 @@
 
   function clearAll() {
     current = "0";
-    previous = null;
-    pendingOperator = null;
+    tokens = [];
     waitingForOperand = false;
     overwriteCurrent = false;
+    justEvaluated = false;
+    lastRepeat = null;
     lastExpression = "";
 
     updateDisplay();
@@ -340,59 +350,23 @@
 
   function showError(error) {
     current = "Erreur";
-    previous = null;
-    pendingOperator = null;
+    tokens = [];
     waitingForOperand = false;
     overwriteCurrent = false;
+    justEvaluated = false;
+    lastRepeat = null;
     lastExpression = error.message || "Calcul impossible";
 
     updateDisplay();
   }
 
-  function calculate(left, right, operator) {
-    let result;
-
-    switch (operator) {
-      case "+":
-        result = left + right;
-        break;
-
-      case "-":
-        result = left - right;
-        break;
-
-      case "*":
-        result = left * right;
-        break;
-
-      case "/":
-        if (right === 0) {
-          throw new Error("Division par zéro impossible");
-        }
-
-        result = left / right;
-        break;
-
-      case "^":
-        result = Math.pow(left, right);
-        break;
-
-      default:
-        throw new Error("Opération inconnue");
-    }
-
-    if (!Number.isFinite(result)) {
-      throw new Error(
-        "Le résultat n’est pas un nombre fini"
-      );
-    }
-
-    return result;
-  }
-
   function inputDigit(digit) {
-    if (current === "Erreur") {
+    if (current === "Erreur" || justEvaluated) {
       clearAll();
+    }
+
+    if (lastToken()?.type === "rparen") {
+      tokens.push({ type: "op", op: "*" });
     }
 
     if (waitingForOperand || overwriteCurrent) {
@@ -404,17 +378,15 @@
     } else if (current === "-0") {
       current = `-${digit}`;
     } else {
-      const digitCount = current.replace(/\D/g, "").length;
-
       // Au-delà de 15 chiffres, un ordinateur ne calcule plus exactement.
-      if (digitCount >= 15) {
+      if (countSignificantDigits(current) >= 15) {
         return;
       }
 
       current += digit;
     }
 
-    if (!pendingOperator) {
+    if (tokens.length === 0) {
       lastExpression = "";
     }
 
@@ -422,8 +394,12 @@
   }
 
   function inputDecimal() {
-    if (current === "Erreur") {
+    if (current === "Erreur" || justEvaluated) {
       clearAll();
+    }
+
+    if (lastToken()?.type === "rparen") {
+      tokens.push({ type: "op", op: "*" });
     }
 
     if (waitingForOperand || overwriteCurrent) {
@@ -437,15 +413,95 @@
       current += ".";
     }
 
-    if (!pendingOperator) {
+    if (tokens.length === 0) {
       lastExpression = "";
     }
 
     updateDisplay();
   }
 
+  function inputParen(paren) {
+    if (paren === "(") {
+      if (current === "Erreur" || justEvaluated) {
+        clearAll();
+      }
+
+      const prev = lastToken();
+      if (prev?.type === "rparen") {
+        tokens.push({ type: "op", op: "*" });
+      } else if (!waitingForOperand && (tokens.length > 0 || current !== "0")) {
+        const value = Number(current);
+        if (!Number.isFinite(value)) {
+          return;
+        }
+        tokens.push({ type: "num", value, text: current });
+        tokens.push({ type: "op", op: "*" });
+      }
+
+      tokens.push({ type: "lparen" });
+      current = "0";
+      waitingForOperand = true;
+      overwriteCurrent = false;
+      justEvaluated = false;
+      lastRepeat = null;
+      lastExpression = "";
+      updateDisplay();
+      return;
+    }
+
+    if (paren === ")") {
+      if (current === "Erreur" || openParenCount() <= 0) {
+        return;
+      }
+
+      const prev = lastToken();
+      if (prev?.type !== "rparen") {
+        if (waitingForOperand && (!prev || prev.type === "op" || prev.type === "lparen")) {
+          return;
+        }
+        const value = Number(current);
+        if (!Number.isFinite(value)) {
+          return;
+        }
+        tokens.push({ type: "num", value, text: current });
+      }
+
+      tokens.push({ type: "rparen" });
+
+      // Aperçu du groupe fermé le plus interne.
+      let depth = 0;
+      let startIdx = -1;
+      for (let i = tokens.length - 1; i >= 0; i--) {
+        if (tokens[i].type === "rparen") depth++;
+        else if (tokens[i].type === "lparen") {
+          depth--;
+          if (depth === 0) {
+            startIdx = i;
+            break;
+          }
+        }
+      }
+
+      if (startIdx >= 0) {
+        try {
+          const groupTokens = tokens.slice(startIdx + 1, -1);
+          const groupValue = evaluateTokens(groupTokens);
+          current = numberToString(groupValue);
+        } catch (error) {
+          showError(error);
+          return;
+        }
+      }
+
+      waitingForOperand = true;
+      overwriteCurrent = true;
+      justEvaluated = false;
+      updateDisplay();
+    }
+  }
+
   function clearEntry() {
-    if (current === "Erreur") {
+    if (current === "Erreur" || justEvaluated) {
       clearAll();
       return;
     }
@@ -454,8 +510,7 @@
     waitingForOperand = false;
     overwriteCurrent = false;
 
-    if (!pendingOperator) {
-      previous = null;
+    if (tokens.length === 0) {
       lastExpression = "";
     }
 
@@ -466,7 +521,8 @@
     if (
       current === "Erreur" ||
       waitingForOperand ||
-      overwriteCurrent
+      overwriteCurrent ||
+      justEvaluated
     ) {
       return;
     }
@@ -484,10 +540,11 @@
   }
 
   function toggleSign() {
+    const prev = lastToken();
     if (
       current === "Erreur" ||
       current === "0" ||
-      (waitingForOperand && pendingOperator)
+      (waitingForOperand && prev && prev.type !== "rparen")
     ) {
       return;
     }
@@ -496,7 +553,7 @@
       ? current.slice(1)
       : `-${current}`;
 
-    if (!pendingOperator) {
+    if (tokens.length === 0) {
       lastExpression = "";
     }
 
@@ -508,41 +565,36 @@
       return;
     }
 
-    // Remplace l'opérateur si le deuxième nombre
-    // n'a pas encore été saisi.
-    if (pendingOperator && waitingForOperand) {
-      pendingOperator = nextOperator;
+    const prev = lastToken();
+
+    // Remplace l'opérateur si le deuxième nombre n'a pas encore été saisi.
+    if (waitingForOperand && prev?.type === "op") {
+      prev.op = nextOperator;
       updateDisplay();
       return;
     }
 
-    const inputValue = Number(current);
-
-    if (!Number.isFinite(inputValue)) {
+    if (waitingForOperand && prev?.type === "lparen") {
       return;
     }
 
-    try {
-      if (previous === null) {
-        previous = inputValue;
-      } else if (pendingOperator) {
-        const result = calculate(
-          previous,
-          inputValue,
-          pendingOperator
-        );
-
-        previous = result;
-        current = numberToString(result);
-      } else {
-        previous = inputValue;
+    if (justEvaluated) {
+      const value = Number(current);
+      if (!Number.isFinite(value)) {
+        return;
       }
-    } catch (error) {
-      showError(error);
-      return;
+      tokens = [{ type: "num", value, text: current }];
+      justEvaluated = false;
+      lastRepeat = null;
+    } else if (prev?.type !== "rparen") {
+      const inputValue = Number(current);
+      if (!Number.isFinite(inputValue)) {
+        return;
+      }
+      tokens.push({ type: "num", value: inputValue, text: current });
     }
 
-    pendingOperator = nextOperator;
+    tokens.push({ type: "op", op: nextOperator });
     waitingForOperand = true;
     overwriteCurrent = false;
     lastExpression = "";
@@ -551,33 +603,79 @@
   }
 
   function equals() {
-    if (
-      current === "Erreur" ||
-      !pendingOperator ||
-      previous === null ||
-      waitingForOperand
-    ) {
+    if (current === "Erreur") {
       return;
     }
 
-    const left = previous;
-    const right = Number(current);
-    const operator = pendingOperator;
+    if (justEvaluated && lastRepeat) {
+      const left = Number(current);
+      if (!Number.isFinite(left)) {
+        return;
+      }
+      try {
+        const result = calculate(left, lastRepeat.right, lastRepeat.op);
+        const resultText = numberToString(result);
+        const expression =
+          `${formatDisplay(left)} ` +
+          `${operatorSymbols[lastRepeat.op]} ` +
+          `${formatDisplay(lastRepeat.right)}`;
+
+        current = resultText;
+        waitingForOperand = true;
+        overwriteCurrent = false;
+        lastExpression = `${expression} =`;
+        addHistory(expression, resultText);
+        updateDisplay();
+      } catch (error) {
+        showError(error);
+      }
+      return;
+    }
+
+    if (tokens.length === 0) {
+      return;
+    }
+
+    const prev = lastToken();
+    if (waitingForOperand && (prev?.type === "op" || prev?.type === "lparen")) {
+      return;
+    }
+
+    const evalTokens = tokens.map((token) => ({ ...token }));
+    if (prev?.type !== "rparen") {
+      const right = Number(current);
+      if (!Number.isFinite(right)) {
+        return;
+      }
+      evalTokens.push({ type: "num", value: right, text: current });
+    }
+
+    const missingCloses = openParenCount(evalTokens);
+    for (let i = 0; i < missingCloses; i++) {
+      evalTokens.push({ type: "rparen" });
+    }
 
     try {
-      const result = calculate(left, right, operator);
+      const result = evaluateTokens(evalTokens);
       const resultText = numberToString(result);
+      const expression = formatTokens(evalTokens, operatorSymbols, formatDisplay);
 
-      const expression =
-        `${formatDisplay(left)} ` +
-        `${operatorSymbols[operator]} ` +
-        `${formatDisplay(right)}`;
+      const n = evalTokens.length;
+      if (
+        n >= 3 &&
+        evalTokens[n - 1].type === "num" &&
+        evalTokens[n - 2].type === "op"
+      ) {
+        lastRepeat = { op: evalTokens[n - 2].op, right: evalTokens[n - 1].value };
+      } else {
+        lastRepeat = null;
+      }
 
       current = resultText;
-      previous = null;
-      pendingOperator = null;
+      tokens = [];
       waitingForOperand = true;
       overwriteCurrent = false;
+      justEvaluated = true;
       lastExpression = `${expression} =`;
 
       addHistory(expression, resultText);
@@ -587,11 +685,50 @@
     }
   }
 
+  function prefixBaseBeforePercent() {
+    if (tokens.length === 0) {
+      return null;
+    }
+
+    const last = lastToken();
+    if (!last || last.type !== "op" || !["+", "-"].includes(last.op)) {
+      return null;
+    }
+
+    let depth = 0;
+    let startIdx = 0;
+    for (let i = tokens.length - 2; i >= 0; i--) {
+      if (tokens[i].type === "rparen") depth++;
+      else if (tokens[i].type === "lparen") {
+        if (depth === 0) {
+          startIdx = i + 1;
+          break;
+        }
+        depth--;
+      }
+    }
+
+    const slice = tokens.slice(startIdx, -1);
+    if (slice.length === 0) {
+      return null;
+    }
+
+    try {
+      return evaluateTokens(slice);
+    } catch (error) {
+      return null;
+    }
+  }
+
   function applyUnary(operation) {
     if (
       current === "Erreur" ||
-      (waitingForOperand && pendingOperator)
+      (waitingForOperand && tokens.length > 0 && lastToken()?.type !== "rparen")
     ) {
+      return;
+    }
+
+    if (lastToken()?.type === "rparen") {
       return;
     }
 
@@ -606,21 +743,13 @@
 
     try {
       switch (operation) {
-        case "percent":
-          // 200 + 10 % donne 220.
-          // 200 × 10 % donne 20.
-          if (
-            previous !== null &&
-            pendingOperator &&
-            ["+", "-"].includes(pendingOperator)
-          ) {
-            result = previous * value / 100;
-          } else {
-            result = value / 100;
-          }
-
+        case "percent": {
+          // 200 + 10 % donne 220 ; 200 × 10 % donne 20.
+          const base = prefixBaseBeforePercent();
+          result = base !== null ? base * value / 100 : value / 100;
           label = `${formatDisplay(value)} %`;
           break;
+        }
 
         case "sqrt":
           if (value < 0) {
@@ -664,15 +793,15 @@
     const resultText = numberToString(result);
     current = resultText;
 
-    if (pendingOperator && previous !== null) {
+    if (tokens.length > 0) {
       // Le résultat devient l'opérande de droite.
       waitingForOperand = false;
       overwriteCurrent = true;
     } else {
-      previous = null;
-      pendingOperator = null;
       waitingForOperand = true;
       overwriteCurrent = false;
+      justEvaluated = true;
+      lastRepeat = null;
       lastExpression = `${label} =`;
 
       addHistory(label, resultText);
@@ -704,7 +833,7 @@
     }
   }
 
-  $("#calc-screen").addEventListener("click", () => {
+  $("#calc-copy-button").addEventListener("click", () => {
     copyText(formatDisplay(current));
   });
 
@@ -727,6 +856,11 @@
       return;
     }
 
+    if (button.dataset.paren) {
+      inputParen(button.dataset.paren);
+      return;
+    }
+
     if (button.dataset.unary) {
       applyUnary(button.dataset.unary);
       return;
@@ -745,6 +879,72 @@
 
     if (action) {
       action();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    const calcPanel = $("#panel-calculatrice");
+    if (!calcPanel || calcPanel.hidden || $("#about-dialog")?.open) {
+      return;
+    }
+
+    if (event.ctrlKey || event.metaKey || event.altKey) {
+      return;
+    }
+
+    const target = event.target;
+    if (
+      target &&
+      (target.matches("input, textarea, select") || target.isContentEditable)
+    ) {
+      return;
+    }
+
+    if (
+      target &&
+      target.closest("button, [role='tab'], a") &&
+      !target.closest(".calculator button.key") &&
+      (event.key === "Enter" || event.key === " ")
+    ) {
+      return;
+    }
+
+    const key = event.key;
+    let handled = true;
+
+    if (/^[0-9]$/.test(key)) {
+      inputDigit(key);
+    } else if (key === "," || key === ".") {
+      inputDecimal();
+    } else if (key === "+") {
+      chooseOperator("+");
+    } else if (key === "-" || key === "−") {
+      chooseOperator("-");
+    } else if (key === "*" || key === "×" || key === "x" || key === "X") {
+      chooseOperator("*");
+    } else if (key === "/" || key === "÷") {
+      chooseOperator("/");
+    } else if (key === "^") {
+      chooseOperator("^");
+    } else if (key === "(" || key === ")") {
+      inputParen(key);
+    } else if (key === "%") {
+      applyUnary("percent");
+    } else if (key === "Enter" || key === "=") {
+      equals();
+    } else if (key === "Backspace") {
+      backspace();
+    } else if (key === "Delete") {
+      clearEntry();
+    } else if (key === "Escape") {
+      clearAll();
+    } else {
+      handled = false;
+    }
+
+    if (handled) {
+      event.preventDefault();
+      keyFeedback();
     }
   });
 
@@ -881,15 +1081,16 @@
     }
 
     current = item.result;
+    justEvaluated = false;
 
-    if (pendingOperator && previous !== null) {
+    if (tokens.length > 0) {
       // Calcul en cours (ex. « 5 + ») : le résultat repris
       // devient le second nombre au lieu d'annuler le calcul.
       waitingForOperand = false;
       overwriteCurrent = true;
     } else {
-      previous = null;
-      pendingOperator = null;
+      tokens = [];
+      lastRepeat = null;
       waitingForOperand = true;
       overwriteCurrent = false;
       lastExpression = "";
@@ -1026,17 +1227,45 @@
     document.querySelectorAll("[data-favorite-for]")
   );
 
+  const RATES_TTL_MS = 24 * 60 * 60 * 1000;
   let rateState = EMBEDDED_RATES;
   let rateKind = "embedded";
   let isFetchingRates = false;
 
   function validRateData(data) {
-    return Boolean(
-      data &&
-      data.rates &&
-      typeof data.rates === "object" &&
-      Number(data.rates.USD) > 0
-    );
+    if (!data || !data.rates || typeof data.rates !== "object" || Array.isArray(data.rates)) {
+      return false;
+    }
+
+    const entries = Object.entries(data.rates);
+    if (entries.length === 0) {
+      return false;
+    }
+
+    const usd = Number(data.rates.USD);
+    if (!Number.isFinite(usd) || usd <= 0) {
+      return false;
+    }
+
+    return entries.every(([code, value]) => {
+      const num = Number(value);
+      return CURRENCY_CODES.includes(code) && Number.isFinite(num) && num > 0;
+    });
+  }
+
+  function ratesNeedRefresh() {
+    if (rateKind === "embedded") {
+      return true;
+    }
+
+    const fetchedAt = Number(rateState.fetchedAt);
+    return !Number.isFinite(fetchedAt) || (Date.now() - fetchedAt) >= RATES_TTL_MS;
+  }
+
+  function maybeRefreshRates() {
+    if (navigator.onLine && ratesNeedRefresh()) {
+      refreshRates();
+    }
   }
 
   function loadStoredRates() {
@@ -1481,7 +1710,11 @@
     updateRateStatus();
   });
 
-  window.addEventListener("online", refreshRates);
+  window.addEventListener("online", () => {
+    if (!$("#panel-devises").hidden) {
+      maybeRefreshRates();
+    }
+  });
 
   populateCurrencySelects();
   updateStars();
@@ -1496,8 +1729,8 @@
   updateConversion();
   updateRateStatus();
 
-  if (navigator.onLine) {
-    refreshRates();
+  if (!$("#panel-devises").hidden) {
+    maybeRefreshRates();
   }
 
   /* ------------------------------------------------------------------
@@ -1882,10 +2115,11 @@
     const percent = parseNumber($("#discount-percent").value);
 
     if (!Number.isFinite(price) || !Number.isFinite(percent) || percent > 100) {
-      setCopyable($("#discount-saving"), "—");
+      setCopyable($("#discount-saving"), "—", false);
       setCopyable(
         $("#discount-final"),
-        Number.isFinite(percent) && percent > 100 ? "Remise > 100 %" : "—"
+        Number.isFinite(percent) && percent > 100 ? "Remise > 100 %" : "—",
+        false
       );
       return;
     }
@@ -1980,7 +2214,15 @@
   ------------------------------------------------------------------ */
 
   const installButton = $("#install-button");
+  const isIos = /iP(hone|ad|od)/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const isStandalone = window.matchMedia("(display-mode: standalone)").matches ||
+    navigator.standalone === true;
   let deferredInstallPrompt = null;
+
+  if (isIos && !isStandalone) {
+    installButton.hidden = false;
+  }
 
   window.addEventListener(
     "beforeinstallprompt",
@@ -1994,6 +2236,9 @@
 
   installButton.addEventListener("click", async () => {
     if (!deferredInstallPrompt) {
+      if (isIos && !isStandalone) {
+        showToast("Sur iPhone ou iPad : touchez Partager puis « Sur l’écran d’accueil ».");
+      }
       return;
     }
 
@@ -2028,6 +2273,7 @@
    */
   const updateBanner = $("#update-banner");
   const updateButton = $("#update-button");
+  const updateDismissButton = $("#update-dismiss");
   let waitingWorker = null;
   let updateRequested = false;
 
@@ -2035,6 +2281,10 @@
     waitingWorker = worker;
     updateBanner.hidden = false;
   }
+
+  updateDismissButton.addEventListener("click", () => {
+    updateBanner.hidden = true;
+  });
 
   function watchForUpdates(registration) {
     if (registration.waiting && navigator.serviceWorker.controller) {

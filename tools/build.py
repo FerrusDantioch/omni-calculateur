@@ -20,8 +20,8 @@ def png_chunk(chunk_type, data):
     )
 
 
-def create_icon(size, destination):
-    """Crée une icône simple avec une zone centrale compatible maskable."""
+def create_icon(size, destination, maskable=False):
+    """Crée une icône PNG 8-bit RGB opaque, avec marge élargie si maskable."""
     background = (13, 9, 22)
     body = (247, 241, 255)
     screen = (124, 58, 237)
@@ -42,42 +42,28 @@ def create_icon(size, destination):
         for y in range(y0, y1):
             pixels[y][x0:x1] = [color] * (x1 - x0)
 
-    # Corps de la calculatrice.
-    rectangle(
-        size * 0.27, size * 0.17,
-        size * 0.73, size * 0.83,
-        body
-    )
+    if maskable:
+        # Zone centrale réduite (rayon max ~0,344 <= 0,40) pour maskable.
+        bx0, by0, bx1, by1 = 0.30, 0.22, 0.70, 0.78
+        sx0, sy0, sx1, sy1 = 0.34, 0.27, 0.66, 0.37
+        left, top = 0.36, 0.44
+        key_w, key_h, gap = 0.075, 0.075, 0.028
+    else:
+        bx0, by0, bx1, by1 = 0.27, 0.17, 0.73, 0.83
+        sx0, sy0, sx1, sy1 = 0.32, 0.23, 0.68, 0.35
+        left, top = 0.34, 0.43
+        key_w, key_h, gap = 0.09, 0.09, 0.035
 
-    # Écran.
-    rectangle(
-        size * 0.32, size * 0.23,
-        size * 0.68, size * 0.35,
-        screen
-    )
-
-    # Grille de touches.
-    left = size * 0.34
-    top = size * 0.43
-    key_width = size * 0.09
-    key_height = size * 0.09
-    gap = size * 0.035
+    rectangle(size * bx0, size * by0, size * bx1, size * by1, body)
+    rectangle(size * sx0, size * sy0, size * sx1, size * sy1, screen)
 
     for row in range(3):
         for column in range(3):
-            x0 = left + column * (key_width + gap)
-            y0 = top + row * (key_height + gap)
+            x0 = size * (left + column * (key_w + gap))
+            y0 = size * (top + row * (key_h + gap))
             color = accent_key if (row == 2 and column == 2) else key
+            rectangle(x0, y0, x0 + size * key_w, y0 + size * key_h, color)
 
-            rectangle(
-                x0,
-                y0,
-                x0 + key_width,
-                y0 + key_height,
-                color
-            )
-
-    # Encodage PNG RGB, sans Pillow ni autre dépendance.
     raw_rows = []
     for row in pixels:
         raw_rows.append(
@@ -88,41 +74,35 @@ def create_icon(size, destination):
             )
         )
 
-    header = struct.pack(
-        ">IIBBBBB",
-        size,
-        size,
-        8,  # profondeur : 8 bits
-        2,  # couleur RGB
-        0,
-        0,
-        0
-    )
-
+    header = struct.pack(">IIBBBBB", size, size, 8, 2, 0, 0, 0)
     png_data = (
         b"\x89PNG\r\n\x1a\n"
         + png_chunk(b"IHDR", header)
         + png_chunk(b"IDAT", zlib.compress(b"".join(raw_rows), 9))
         + png_chunk(b"IEND", b"")
     )
-
     destination.write_bytes(png_data)
 
 
 def main():
     ICON_DIR.mkdir(parents=True, exist_ok=True)
 
-    create_icon(192, ICON_DIR / "icon-192.png")
-    create_icon(512, ICON_DIR / "icon-512.png")
+    create_icon(180, ICON_DIR / "apple-touch-icon.png", maskable=False)
+    create_icon(192, ICON_DIR / "icon-192.png", maskable=False)
+    create_icon(512, ICON_DIR / "icon-512.png", maskable=False)
+    create_icon(512, ICON_DIR / "icon-maskable-512.png", maskable=True)
 
     files = [
         "index.html",
         "style.css",
+        "calc-engine.js",
         "app.js",
         "manifest.json",
         "service-worker.js",
+        "icons/apple-touch-icon.png",
         "icons/icon-192.png",
         "icons/icon-512.png",
+        "icons/icon-maskable-512.png",
         "oxanium.woff2",
         "literata.woff2",
         "jetbrains-mono.woff2",
@@ -149,10 +129,7 @@ def main():
                 arcname=f"omni-calculateur/{name}"
             )
 
-    print("Icônes générées :")
-    print(f"  {ICON_DIR / 'icon-192.png'}")
-    print(f"  {ICON_DIR / 'icon-512.png'}")
-    print(f"Archive créée : {archive_path}")
+    print("Icônes générées et archive créée :", archive_path)
 
 
 if __name__ == "__main__":
