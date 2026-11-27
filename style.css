@@ -24,6 +24,28 @@
 }
 
 :root,
+:root[data-theme="nuit"] {
+  color-scheme: dark;
+  --bg: #14111d;
+  --surface: #1d1929;
+  --surface-2: #14111d;
+  --key: #262036;
+  --key-hover: #302945;
+  --text: #e9e4f2;
+  --muted: #a59cbb;
+  --border: #332c47;
+  --accent: #a777ff;
+  --accent-contrast: #140d24;
+  --halo: #d6c2ff;
+  --equal-bg: #a777ff;
+  --equal-text: #140d24;
+  --danger: #ff8fa3;
+  --shadow: 0 16px 45px rgb(0 0 0 / 40%);
+  --f-titre: "Oxanium", "Trebuchet MS", system-ui, sans-serif;
+  --f-texte: "Literata", Georgia, "Times New Roman", serif;
+  --f-chiffres: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+
 :root[data-theme="clair"] {
   color-scheme: light;
   --bg: #f4f6fb;
@@ -58,32 +80,6 @@
   --equal-text: #ffffff;
   --danger: #ffaaa5;
   --shadow: 0 14px 40px rgb(0 0 0 / 28%);
-}
-
-/*
- * « Violet Nuit » : mêmes couleurs et mêmes polices que le portfolio
- * Omni-système (fond #14111d, surfaces #1d1929, violet du logo #a777ff).
- */
-:root[data-theme="nuit"] {
-  color-scheme: dark;
-  --bg: #14111d;
-  --surface: #1d1929;
-  --surface-2: #14111d;
-  --key: #262036;
-  --key-hover: #302945;
-  --text: #e9e4f2;
-  --muted: #a59cbb;
-  --border: #332c47;
-  --accent: #a777ff;
-  --accent-contrast: #140d24;
-  --halo: #d6c2ff;
-  --equal-bg: #a777ff;
-  --equal-text: #140d24;
-  --danger: #ff8fa3;
-  --shadow: 0 16px 45px rgb(0 0 0 / 40%);
-  --f-titre: "Oxanium", "Trebuchet MS", system-ui, sans-serif;
-  --f-texte: "Literata", Georgia, "Times New Roman", serif;
-  --f-chiffres: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
 }
 
 * {
@@ -276,42 +272,59 @@ input {
   width: 100%;
   min-width: 0;
   margin-bottom: 12px;
-  padding: 15px 16px;
+  padding: 12px 16px 15px;
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 15px;
   background: var(--surface-2);
   color: var(--text);
   text-align: right;
+}
+
+.calc-screen-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.copy-hint {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   cursor: copy;
   -webkit-tap-highlight-color: transparent;
 }
 
-.calculator-screen:active {
+.copy-hint:hover,
+.copy-hint:active {
   border-color: var(--accent);
-}
-
-.copy-hint {
-  position: absolute;
-  top: 8px;
-  left: 12px;
-  color: var(--muted);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  opacity: 0.75;
-  text-transform: uppercase;
+  color: var(--text);
 }
 
 .calc-expression {
   display: block;
-}
-
-.calc-expression {
+  flex: 1;
+  min-width: 0;
   min-height: 1.5em;
+  padding-top: 10px;
   overflow-wrap: anywhere;
   color: var(--muted);
   font-size: 0.95rem;
+  text-align: right;
 }
 
 .calc-display {
@@ -328,10 +341,20 @@ input {
   scrollbar-width: thin;
 }
 
+.grouping-keys,
 .scientific-keys,
 .keypad {
   display: grid;
   gap: 7px;
+}
+
+.grouping-keys {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 7px;
+}
+
+.grouping-keys .key.scientific {
+  min-height: 44px;
 }
 
 .scientific-keys {
@@ -544,9 +567,9 @@ input {
 }
 
 .star-button {
-  min-width: 36px;
-  min-height: 30px;
-  padding: 0 6px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 8px;
   border: 0;
   border-radius: 8px;
   background: transparent;
@@ -756,6 +779,14 @@ fieldset.field legend {
   font-weight: 750;
 }
 
+.tool-results dd.copyable {
+  display: inline-flex;
+  align-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 4px 6px;
+}
+
 .tool-results .main-result dd {
   color: var(--accent);
   font-size: 1.45rem;
@@ -769,7 +800,7 @@ fieldset.field legend {
 .mini-input {
   display: inline-block;
   width: 5.5em;
-  min-height: 42px;
+  min-height: 44px;
   padding: 0 8px;
   text-align: center;
 }
@@ -779,8 +810,11 @@ fieldset.field legend {
 }
 
 .tool-answer output {
-  display: inline-block;
-  padding: 2px 4px;
+  display: inline-flex;
+  align-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 4px 8px;
   color: var(--accent);
   font-size: 1.3rem;
   font-variant-numeric: tabular-nums;
@@ -840,14 +874,24 @@ fieldset.field legend {
   box-shadow: var(--shadow);
 }
 
-.update-banner button {
-  min-height: 42px;
+.update-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.update-banner .update-primary {
+  min-height: 44px;
   padding: 6px 14px;
   border: 0;
   border-radius: 10px;
   background: var(--accent);
   color: var(--accent-contrast);
   font-weight: 750;
+}
+
+.update-banner .button-secondary {
+  min-height: 44px;
 }
 
 /* Bouton rond « i » à côté du thème, et fenêtre « À propos » */
@@ -1078,7 +1122,8 @@ footer {
     width: 1px;
     height: 1px;
     overflow: hidden;
-    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   .brand p {
@@ -1175,5 +1220,6 @@ footer {
   *::after {
     scroll-behavior: auto !important;
     transition: none !important;
+    animation: none !important;
   }
 }

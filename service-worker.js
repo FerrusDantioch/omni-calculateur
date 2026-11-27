@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "omni-calculateur-v1.3.0";
+const CACHE_NAME = "omni-calculateur-v1.4.0";
 const CACHE_PREFIX = "omni-calculateur-";
 
 /*
@@ -20,10 +20,13 @@ const APP_SHELL = [
   "./",
   "./index.html",
   "./style.css",
+  "./calc-engine.js",
   "./app.js",
   "./manifest.json",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
+  "./icons/icon-maskable-512.png",
+  "./icons/apple-touch-icon.png",
   "./oxanium.woff2",
   "./literata.woff2",
   "./jetbrains-mono.woff2"
@@ -131,30 +134,41 @@ self.addEventListener("fetch", (event) => {
 
   /*
    * Autres ressources locales :
-   * cache-first, puis réseau si la ressource n'est pas en cache.
+   * cache-first, puis réseau si la ressource n'est pas en cache,
+   * avec réponse 503 maîtrisée hors ligne.
    */
   event.respondWith((async () => {
-    // Seulement dans le cache du Calculateur (pas celui d'une autre application).
-    const cachedResponse = await (await caches.open(CACHE_NAME)).match(request);
+    const cache = await caches.open(CACHE_NAME);
+    const cachedResponse = await cache.match(request);
 
     if (cachedResponse) {
       return cachedResponse;
     }
 
-    const networkResponse = await fetch(request);
+    try {
+      const networkResponse = await fetch(request);
 
-    if (
-      networkResponse.ok &&
-      networkResponse.type === "basic"
-    ) {
-      const cache = await caches.open(CACHE_NAME);
+      if (
+        networkResponse.ok &&
+        networkResponse.type === "basic"
+      ) {
+        await cache.put(
+          request,
+          networkResponse.clone()
+        );
+      }
 
-      await cache.put(
-        request,
-        networkResponse.clone()
+      return networkResponse;
+    } catch (error) {
+      return new Response(
+        "Ressource indisponible hors ligne.",
+        {
+          status: 503,
+          headers: {
+            "Content-Type": "text/plain; charset=utf-8"
+          }
+        }
       );
     }
-
-    return networkResponse;
   })());
 });

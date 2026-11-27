@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr" data-theme="clair">
+<html lang="fr" data-theme="nuit">
 <head>
   <meta charset="utf-8">
   <meta
@@ -8,16 +8,17 @@
   >
   <meta name="description"
         content="Calculatrice scientifique, convertisseur de devises et d’unités, outils de pourcentages, utilisables hors ligne.">
-  <meta name="theme-color" id="theme-color-meta" content="#f4f6fb">
+  <meta name="theme-color" id="theme-color-meta" content="#14111d">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="omni-calc">
 
   <title>omni-calculateur</title>
 
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./icons/icon-192.png" type="image/png">
-  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 
   <!-- Restaure le thème avant l'affichage de la page pour éviter un flash. -->
   <script>
@@ -54,6 +55,7 @@
   </script>
 
   <link rel="stylesheet" href="./style.css">
+  <script src="./calc-engine.js" defer></script>
   <script src="./app.js" defer></script>
 </head>
 
@@ -72,9 +74,9 @@
         <div class="theme-control">
           <label for="theme-select">Thème</label>
           <select id="theme-select">
-            <option value="clair">Clair</option>
-            <option value="sombre">Sombre</option>
             <option value="nuit">Sombre « Violet Nuit »</option>
+            <option value="sombre">Sombre</option>
+            <option value="clair">Clair</option>
           </select>
         </div>
 
@@ -156,22 +158,32 @@
       >
         <div class="calculator-layout">
           <div class="calculator" aria-label="Calculatrice universelle">
-            <!-- Toucher l'écran copie le nombre affiché. -->
-            <button
-              id="calc-screen"
-              class="calculator-screen"
-              type="button"
-              title="Copier le résultat"
-            >
-              <span class="copy-hint" aria-hidden="true">Copier</span>
-              <span id="calc-expression" class="calc-expression"></span>
+            <!-- Écran de calcul avec bouton dédié pour copier le résultat. -->
+            <div id="calc-screen" class="calculator-screen">
+              <div class="calc-screen-top">
+                <button
+                  id="calc-copy-button"
+                  class="copy-hint"
+                  type="button"
+                  aria-label="Copier le résultat"
+                  title="Copier le résultat"
+                >Copier</button>
+                <span id="calc-expression" class="calc-expression"></span>
+              </div>
               <output
                 id="calc-display"
                 class="calc-display"
                 aria-label="Résultat du calcul"
                 aria-live="polite"
               >0</output>
-            </button>
+            </div>
+
+            <div class="grouping-keys" aria-label="Parenthèses">
+              <button class="key scientific" type="button"
+                      data-paren="(" aria-label="Parenthèse ouvrante">(</button>
+              <button class="key scientific" type="button"
+                      data-paren=")" aria-label="Parenthèse fermante">)</button>
+            </div>
 
             <div class="scientific-keys" aria-label="Fonctions scientifiques">
               <button class="key scientific" type="button"
@@ -459,9 +471,9 @@
             </div>
 
             <dl class="tool-results">
-              <div><dt>Pourboire</dt><dd id="bill-tip" class="copyable" tabindex="0" role="button">—</dd></div>
-              <div><dt>Total</dt><dd id="bill-total" class="copyable" tabindex="0" role="button">—</dd></div>
-              <div class="main-result"><dt>Par personne</dt><dd id="bill-share" class="copyable" tabindex="0" role="button">—</dd></div>
+              <div><dt>Pourboire</dt><dd id="bill-tip" class="copyable" tabindex="0" role="button" aria-label="Copier le pourboire" title="Copier le pourboire">—</dd></div>
+              <div><dt>Total</dt><dd id="bill-total" class="copyable" tabindex="0" role="button" aria-label="Copier le total" title="Copier le total">—</dd></div>
+              <div class="main-result"><dt>Par personne</dt><dd id="bill-share" class="copyable" tabindex="0" role="button" aria-label="Copier la part par personne" title="Copier la part par personne">—</dd></div>
             </dl>
           </form>
 
@@ -483,8 +495,8 @@
             </div>
 
             <dl class="tool-results">
-              <div><dt>Économie</dt><dd id="discount-saving" class="copyable" tabindex="0" role="button">—</dd></div>
-              <div class="main-result"><dt>Prix final</dt><dd id="discount-final" class="copyable" tabindex="0" role="button">—</dd></div>
+              <div><dt>Économie</dt><dd id="discount-saving" class="copyable" tabindex="0" role="button" aria-label="Copier l’économie" title="Copier l’économie">—</dd></div>
+              <div class="main-result"><dt>Prix final</dt><dd id="discount-final" class="copyable" tabindex="0" role="button" aria-label="Copier le prix final" title="Copier le prix final">—</dd></div>
             </dl>
           </form>
 
@@ -498,7 +510,7 @@
               <input id="pct-of-base" class="mini-input" type="text" inputmode="decimal"
                      enterkeyhint="done" aria-label="Nombre" placeholder="150"> ?
             </p>
-            <p class="tool-answer"><output id="pct-of-result" class="copyable" tabindex="0" role="button">—</output></p>
+            <p class="tool-answer"><output id="pct-of-result" class="copyable" tabindex="0" role="button" aria-label="Copier le résultat du pourcentage" title="Copier le résultat">—</output></p>
 
             <p class="tool-question">
               <input id="pct-part" class="mini-input" type="text" inputmode="decimal"
@@ -507,7 +519,7 @@
               <input id="pct-whole" class="mini-input" type="text" inputmode="decimal"
                      enterkeyhint="done" aria-label="Total" placeholder="120"> ?
             </p>
-            <p class="tool-answer"><output id="pct-share-result" class="copyable" tabindex="0" role="button">—</output></p>
+            <p class="tool-answer"><output id="pct-share-result" class="copyable" tabindex="0" role="button" aria-label="Copier la part en pourcentage" title="Copier le résultat">—</output></p>
 
             <p class="tool-question">Évolution de
               <input id="pct-from" class="mini-input" type="text" inputmode="decimal"
@@ -516,7 +528,7 @@
               <input id="pct-to" class="mini-input" type="text" inputmode="decimal"
                      enterkeyhint="done" aria-label="Valeur d’arrivée" placeholder="100"> ?
             </p>
-            <p class="tool-answer"><output id="pct-change-result" class="copyable" tabindex="0" role="button">—</output></p>
+            <p class="tool-answer"><output id="pct-change-result" class="copyable" tabindex="0" role="button" aria-label="Copier l’évolution en pourcentage" title="Copier le résultat">—</output></p>
           </form>
         </div>
       </section>
@@ -532,10 +544,13 @@
     <form method="dialog">
       <span class="brand-logo" aria-hidden="true">Ω</span>
       <h2 id="about-title">omni-calculateur</h2>
-      <p class="about-version">Version 1.3.0</p>
+      <p class="about-version">Version 1.4.0</p>
       <p>Calculatrice scientifique, convertisseur de devises et d’unités,
         outils de pourcentages. Tout se passe sur cet appareil, sans compte,
         même hors ligne.</p>
+      <p><small>Clavier physique : chiffres, <code>+ − × ÷ ^ ( ) %</code>,
+        <code>Entrée</code> / <code>=</code>, <code>Retour</code>,
+        <code>Suppr</code> (CE) et <code>Échap</code> (AC).</small></p>
 
       <div class="about-credit">
         <p>Application réalisée par <strong>Ferrus Dantioch</strong>.</p>
@@ -543,7 +558,8 @@
           <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.fr"
              target="_blank" rel="noopener">Creative Commons BY-NC-ND 4.0</a> :
           vous pouvez la partager librement en citant son auteur, mais pas la
-          vendre ni la modifier.</p>
+          vendre ni la modifier sans autorisation.</p>
+        <p>Contact : <a href="mailto:omni-systeme.choking513@passmail.net">omni-systeme.choking513@passmail.net</a></p>
         <p><small>Polices de caractères : Oxanium, Literata et JetBrains Mono, sous leur
           propre licence, la SIL Open Font License 1.1 (fichier POLICES-OFL.txt).</small></p>
         <a class="button-secondary about-link"
@@ -561,7 +577,10 @@
   <!-- Proposé quand une nouvelle version de l'application est prête. -->
   <div id="update-banner" class="update-banner" role="alert" hidden>
     <span>Une nouvelle version est disponible.</span>
-    <button id="update-button" type="button">Mettre à jour</button>
+    <div class="update-actions">
+      <button id="update-dismiss" class="button-secondary" type="button">Plus tard</button>
+      <button id="update-button" class="update-primary" type="button">Mettre à jour</button>
+    </div>
   </div>
 
   <noscript>

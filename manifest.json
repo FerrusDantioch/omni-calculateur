@@ -2,15 +2,15 @@
   "id": "/omni-calculateur/",
   "name": "omni-calculateur",
   "short_name": "omni-calc",
-  "description": "Calculatrice universelle et convertisseur de devises utilisables hors ligne.",
+  "description": "Calculatrice scientifique, convertisseur de devises et d’unités et outils du quotidien utilisables hors ligne.",
   "lang": "fr",
   "dir": "ltr",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#f4f6fb",
-  "theme_color": "#3155c6",
+  "background_color": "#14111d",
+  "theme_color": "#14111d",
   "categories": [
     "utilities",
     "finance",
@@ -30,10 +30,67 @@
       "purpose": "any"
     },
     {
-      "src": "icons/icon-512.png",
+      "src": "icons/icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Convertisseur de devises",
+      "short_name": "Devises",
+      "description": "Ouvrir directement le convertisseur de devises",
+      "url": "./?vue=devises",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Convertisseur d’unités",
+      "short_name": "Unités",
+      "description": "Ouvrir directement le convertisseur d’unités",
+      "url": "./?vue=unites",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Outils pratiques",
+      "short_name": "Outils",
+      "description": "Addition partagée, remise et pourcentages",
+      "url": "./?vue=outils",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshots/mobile-nuit.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Calculatrice en thème Violet Nuit sur mobile"
+    },
+    {
+      "src": "screenshots/desktop-nuit.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Calculatrice et historique en thème Violet Nuit sur ordinateur"
     }
   ]
 }

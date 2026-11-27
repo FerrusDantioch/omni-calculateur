@@ -1,4 +1,4 @@
-Polices incluses dans Omni-Time (fichiers oxanium.woff2, literata.woff2,
+Polices incluses dans omni-calculateur (fichiers oxanium.woff2, literata.woff2,
 jetbrains-mono.woff2), les mêmes que dans L'Atelier et le portfolio de
 l'Omni-système. Elles gardent leur propre licence, la SIL Open Font
 License 1.1, dont le texte complet suit.
