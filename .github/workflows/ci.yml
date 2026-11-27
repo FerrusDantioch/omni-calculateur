@@ -32,7 +32,7 @@ jobs:
           while IFS= read -r -d '' f; do
             node --check "$f"
           done < <(find . -path ./node_modules -prune -o -type f \( -name '*.js' -o -name '*.mjs' \) -print0)
-          python3 -m py_compile tools/build.py
+          python3 -B -c "import ast; ast.parse(open('tools/build.py', encoding='utf-8').read())"
 
       - name: Tests unitaires du moteur de calcul
         run: node tests/unit.test.mjs
@@ -51,4 +51,4 @@ jobs:
         run: node tests/tester.js
 
       - name: Vérifier que le dépôt reste propre
-        run: test -z "$(git status --porcelain)"
+        run: test -z "$(git status --porcelain)" || { git status --porcelain; exit 1; }
